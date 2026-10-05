@@ -545,6 +545,89 @@ le glitcher à 5 $.
 
 ---
 
+## 3bis. ★ Un second banc public sur nRF52840 — le fork **raiden-pico d'iceman1001** `[ref]`
+
+> **Nature : `[ref]`.** Documentation d'un **fork tiers de raiden-pico** —
+> `iceman1001/raiden-pico`, branche `feat/unique-dump-paths`, commit **`90b547e`** (2026-06-04),
+> cité par URL SHA-figée (§11, source 5bis).
+> ⚠️ **Troisième « raiden » du projet, à ne pas confondre** : ni l'upstream `AdamLaurie/raiden-pico`
+> (§7.3), ni le fork local v0.14 du banc BAT32G135.
+> ⚠️⚠️ **Deux coupures de provenance à tenir.**
+> ① **La cible est un nRF52840 (dongle PCA10059 rev 2), PAS un nRF52820.** Tout chiffre ci-dessous est
+> **de cette puce et de ce banc** — ce n'est **pas** un `[fait]` au sens du projet (mesuré sur *notre*
+> banc), et cela **ne comble pas** le vide « `[LR]` ne publie aucun paramètre » pour le nRF52820, qui
+> reste **à caractériser** (§0, §3.4, §6.1, §10). ② Ce fork **outille exactement l'attaque du §3** : il
+> ajoute `TARGET NRF52840` et `TARGET GLITCH APPROTECT` (balayage 2D delay × width), **crowbar sur
+> `DEC1`**, piloté par le RP2350. C'est la preuve qu'un **second praticien** a monté ce banc — pas une
+> source indépendante sur la physique.
+
+### 3bis.1 Le point de fonctionnement publié — attribué, et sur nRF52840
+
+| Grandeur | Valeur `[ref]` iceman | Note |
+|---|---|---|
+| Balayage par défaut (`TARGET GLITCH APPROTECT`) | delay **1000 → 20 000 µs** (pas 25) × width **150 → 450 cyc** (pas 75) ; off 60 ms, settle 8 ms | width en **cycles de 6,67 ns** (≈ 1–3 µs) |
+| ★ Point validé (PCA10059 rev 2, 2026-06-02) | width **225–265 cyc** (~1,5–1,77 µs) · delay **~1065–1170 µs** post-power-on (fenêtre ~110 µs) · off **18 ms** | ~1–2 min/unlock, reproduit 3–7× |
+
+⚠️ **Ce point ne se transpose pas tel quel au nRF52820** : puce différente, rail différent (§6.4), banc
+tiers. Il **oriente** un départ de balayage (§9 phase 1), il ne le **fixe** pas.
+
+### 3bis.2 ★ Cinq apports concrets que `[LR]` ne donne pas
+
+1. ⚠️ **Garde-fou anti-effacement : la largeur est bornée en dur à ≤ 450 cycles (~3 µs).** Le **fait**
+   `[ref]` est le **clamp firmware**. La **raison donnée par iceman** (son explication, pas un mécanisme
+   établi) : *« a glitch too long can push the boot into a mass-erase (NVMC ERASEALL) instead of an
+   APPROTECT-readback fault, wiping the flash you want to dump »*. ★ **Distinct du `ERASEALL`
+   volontaire** de la phase 4 (§9) : là, on efface **exprès** pour reflasher ; ici, un glitch trop
+   large déclencherait l'effacement **par accident**. ⇒ borne haute de balayage à respecter (§9 phase 1).
+2. **Raison indépendante pour laquelle le reset chaud échoue.** iceman confirme que la variante **nRST
+   (warm reset) ne marche pas**, avec un mécanisme **physique** : *« the crowbar can't fault DEC1 once
+   the LDO holds it up (steady state) — only the cold ramp is glitchable »*. ★ C'est une **seconde
+   raison, indépendante** de celle du §5.1 (où le pin reset ne ré-arme pas le SWJ-DP) : **même
+   conclusion opératoire** — il faut un **power-cycle à froid** — par un autre chemin.
+3. **Un bouton d'amplitude par la résistance de source du MOSFET.** iceman câble une **`Rsrc`
+   (source du MOSFET → GND)** et la désigne *« KEY KNOB — amplitude tuning »* : **10 Ω = régime
+   fault-sans-reset**, **0 Ω = trop fort (même 6 ns crashe)**. ⚠️ **À ne confondre avec aucune des
+   résistances du crowbar du projet** : ni `Rs` (série alim), ni `R_damp` (drain), ni `R_pd`
+   (grille→source). `Rsrc` est au **même nœud** que le `R2 = 0,22 Ω` de COSIC `[lit]` (limitation par la
+   source). ★ **Et c'est une philosophie différente** : le projet règle la profondeur par `Rs`/`R_damp`
+   en tenant que *« la profondeur n'est jamais le facteur limitant »*, là où iceman en fait son bouton
+   principal. **Concorder n'est pas être juste** : deux approches **parallèles** de contrôle de force,
+   pas une confirmation mutuelle.
+4. **Oracle : un second praticien préfère une vraie lecture mémoire au bit de statut.** ⚠️ **Nuance
+   intra-source à dire honnêtement** : `NRF52840_APPROTECT.md` définit le succès du *firmware* comme
+   *« DPIDR `0x2BA01477` **and** APPROTECTSTATUS bit0 set »*, **mais** le fichier qu'iceman désigne comme
+   *« the working one »* (`NRF52840_WIRING_POWERCYCLE.md`, campagne du 2026-06-02) tranche autrement :
+   *« Detection = a real AHB read (`FICR.INFO.PART == 0x52840`), **not** the unreliable APPROTECTSTATUS
+   bit »*. ⇒ **la campagne réelle a abandonné le bit.** C'est un praticien **indépendant qui trouve
+   `APPROTECTSTATUS` peu fiable et préfère une lecture mémoire réelle** — ce qui **conforte le choix
+   d'oracle principal du §8.1** (lecture AHB). ⚠️ **Cela ne tranche PAS la question ouverte du §8.2** :
+   le test discriminant en 3 étapes reste à faire.
+5. **Bypass transitoire confirmé.** *« A genuine hit shows UICR.APPROTECT still = 0xFFFFFF00 (locked)
+   while debug is open = clean skip, not UICR corruption. Re-locks on the next power-cycle → dump
+   flash+RAM while open »* ⇒ corrobore la consigne du §9 phase 3 (**ne pas couper l'alimentation** après
+   un succès) et l'observation `[LR]` du §8.2 (debug ouvert malgré un `UICR.APPROTECT` toujours à
+   `0xFFFFFF00`).
+
+### 3bis.3 ⚠️ Une divergence sur `DEC1` — à vérifier, pas à trancher
+
+iceman écrit *« DEC1 (~1.3 V core regulator output) »*. Or le §6.4 porte déjà **deux** valeurs pour
+`DEC1` : **0,8–0,9 V** mesurés par `[LR]` sur nRF52840, et **1,1 V** spécifiés par la `[PS]` sur
+nRF52820. iceman apporte une **troisième** valeur — **~1,3 V** — sur la **même puce que `[LR]`**
+(nRF52840), et qui **ressemble à la tension de `DEC4`** (1,2–1,3 V, l'alim système). ⚠️ **Ne pas
+trancher** : soit iceman nomme « DEC1 » un rail que `[LR]` appelle `DEC4`, soit la tension varie selon
+le mode d'alimentation (§1bis.3). **Sonder `DEC1` à l'oscilloscope sur la pièce réelle** avant de se
+fier à une valeur.
+
+### 3bis.4 Ce qui corrobore des faits déjà au document (sans rien y ajouter)
+
+La carte de registres (`DPIDR 0x2BA01477`, CTRL-AP `ERASEALL 0x04` / `APPROTECTSTATUS 0x0C`,
+`UICR.APPROTECT 0x1000_1208` = `0xFFFFFF00` protégé, `FICR.INFO.PART 0x1000_0100`) est **identique** à
+celle du §2.1 et du §1 — deuxième attestation `[ref]`. Le **retrait des condensateurs de `DEC1` et
+`VDD`** (noté *« REQUIRED »*) recoupe le §6.2. La **localisation de la fenêtre par boot-marker et
+analyse de consommation** (scripts `nrf_timing_marker.py`, `crashmap`) recoupe le §3.3 et la phase 0.9.
+
+---
+
 ## 4. Brochage — connexion SWD et point d'injection
 
 ### 4.1 Les broches qui comptent
@@ -873,6 +956,12 @@ réellement le reset ; ② **`SWD READ` affiche le dump OCTET par octet** (`0xAA
 seul groupe de 8 hex d'une ligne étant **l'adresse** — un parseur orienté mots lirait des adresses.
 Le **compte**, lui, est bien un nombre de **mots**.
 
+⚠️ **Un fork tiers l'a déjà porté sur cette cible.** `iceman1001/raiden-pico` (branche
+`feat/unique-dump-paths`) ajoute `TARGET NRF52840` et `TARGET GLITCH APPROTECT` (balayage 2D sur un
+crowbar `DEC1`) — c'est-à-dire l'attaque complète du §3, outillée sur RP2350 (détail et point de
+fonctionnement en **§3bis**). ⚠️ **3ᵉ raiden, à ne pas confondre** avec l'upstream AdamLaurie
+ci-dessus ni avec le fork local v0.14 du banc BAT32G135.
+
 ---
 
 ## 8. Oracles — comment savoir ce qui se passe
@@ -931,6 +1020,12 @@ riche qu'un bit par power-cycle.
 > (`nrfjprog --memwr 0x10001208 --val 0xFFFFFF00`) + power-cycle → **attendre `0`** ; ③ après un
 > glitch réussi, **relire** : si `1`, l'oracle rapide est validé ; si `0` alors que l'AHB-AP répond,
 > il ne vaut rien. **Tant que ce test n'est pas fait, scorer avec le §8.1.**
+>
+> ★ **Un second praticien a tranché dans le sens de la prudence** (§3bis.2 pt 4) : la campagne
+> `iceman1001/raiden-pico` sur nRF52840 **abandonne `APPROTECTSTATUS`** au profit d'une lecture
+> `FICR.INFO.PART == 0x52840` — *« not the unreliable APPROTECTSTATUS bit »*. Cela **conforte le choix
+> d'oracle du §8.1** (lecture mémoire réelle), mais **ne valide pas** pour autant le test discriminant
+> ci-dessus, qui reste à faire pour savoir si le bit *pourrait* servir d'oracle rapide.
 
 ### 8.3 Un pré-filtre gratuit : la signature de consommation
 
@@ -995,6 +1090,12 @@ paramètres sourcés (`[LR]` n'en publie aucun) :
 | `width_ns` | **50 → 2 000**, pas 50 | ⚠️ commencer **étroit** : on attaque le rail cœur, pas à travers un LDO (§6.1) |
 | `settle_ms` | ≥ **100** | > `tR_VDD` (60 ms) + marge |
 | Tension `VDD` | **juste au-dessus du plancher mesuré** en phase 0.7 | sous-alimentation (§6.4) |
+
+⚠️ **Borne haute de largeur — garde-fou anti-effacement.** Le fork raiden `iceman1001` clampe la
+largeur à **≤ 450 cycles (~3 µs)** pour éviter qu'un glitch trop long ne bascule le boot en
+`NVMC ERASEALL` accidentel (§3bis.2) ; sur **nRF52840** son point validé tombe à **225–265 cyc**
+`[ref]`. ⇒ **ne pas balayer au-delà de ~3 µs** sans oscilloscope, et prendre ces valeurs comme un
+**repère de départ** — à re-caractériser sur nRF52820 (puce et rail différents, §3bis.1).
 
 **Boucle** : `power-cycle (BP5) → le front montant déclenche le FaultyCat → tir → pré-filtre
 consommation (§8.3) → oracle SWD si signature modifiée → scorer (§8.4) → répéter`.
@@ -1253,6 +1354,7 @@ le SWD que si la signature a changé ; ③ **remplacer le power-cycle par un cre
 | 3 | **LimitedResults — … partie 2** — https://www.limitedresults.com/results/nrf52-debug-resurrection-approtect-bypass-part-2 | **`[LR]`**, cité **par URL** | validation sur **produit réel** (Logitech G Pro), reproduction sur **nRF52832/52833**, **CVSS 7,6**, **notice Nordic du 12 juin 2020**, liste des six références |
 | 4 | `github.com/ElectronicCats/FaultyCat-Firmware` et `github.com/ElectronicCats/faultycat-TUI` | `[ref]` | brochage v2.x, bornes `width_ns` / `delay_us`, protocole crowbar ; ★ atteste que le **sous-shell SWD est WIP** (`ERR wip`) |
 | 5 | `github.com/AdamLaurie/raiden-pico` (`README.md`, `CHANGELOG.md`, `src/command_parser.c`) | `[ref]` | moteur de glitch **6,67 ns**, primitives SWD génériques, et les **deux pièges** de §7.3 |
+| 5bis | ★ **`github.com/iceman1001/raiden-pico` @ `90b547e`** (branche `feat/unique-dump-paths`) — `NRF52840_APPROTECT.md`, `NRF52840_GLITCH_SETUP.md`, `NRF52840_WIRING_POWERCYCLE.md` | `[ref]`, **3ᵉ raiden**, cité par URL **SHA-figée** | §3bis : second banc public sur **nRF52840** — point de fonctionnement, garde-fou **ERASEALL**, **cold-boot-only**, bouton **`Rsrc`**, oracle **`FICR.PART`**, bypass transitoire. ⚠️ **nRF52840, pas 52820** |
 | 6 | `https://docs.buspirate.com` | `[ref]` | PSU **1–5 V / 300 mA**, commandes `W` / `w` / `v` |
 | 7 | OpenOCD — `target/nrf52.cfg` (support amont natif) · **nrfjprog** (Nordic Command Line Tools) | `[ref]` | oracle et dump ; ★ contrairement à une cible exotique, **aucun `.cfg` maison n'est nécessaire** |
 | 7bis-a | ★★ **FCC ID `JNZCU0021`** — *Wireless USB dongle*, **Logitech Far East Ltd**, autorisation du **12 août 2020**, BLE + GFSK 2,4 GHz — https://fccid.io/JNZCU0021 · **photos internes** du rapport **Bureau Veritas réf. 200615E03, p. 4/5 et 5/5** (fournies par l'utilisateur) | `[ref]` | ★★ **le marquage `N52820 / QDAACA / 2011AA`**, d'où tout le §1bis : **`<H>` = `C` ⇒ régime A**, **`<PP>` = `QD` ⇒ QFN40**, production **semaine 11 / 2020**. Montre aussi le PCB nu, l'antenne et les repères de condensateurs |

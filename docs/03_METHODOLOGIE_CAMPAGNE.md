@@ -612,6 +612,33 @@ Aucun détecteur n'est prouvé présent dans un STM32 par le corpus, mais si l'o
   ⚠️ **Aucun paramètre de glitch n'est publié** → tout est **à caractériser**. ⚠️ **Le nRF52820 n'a pas
   été testé** et **aucun CVE n'existe** — détail des coupures de provenance et URL :
   [`04`](04_REFERENCES.md) §J.
+- ★ **Fork raiden-pico d'`iceman1001`** (branche `feat/unique-dump-paths` @ `90b547e`) — ⚠️ **`[ref]`,
+  docs d'outil sur GitHub, cité par URL SHA-figée, PAS dans `docs_pdf/writeups/`** et **non compté dans
+  les 68**. Documente, sur le **même moteur crowbar RP2350** que ce projet, **trois cibles** :
+  - **nRF52840** (`TARGET GLITCH APPROTECT`, crowbar `DEC1`) : **second banc public** de l'attaque
+    LimitedResults ci-dessus, avec un **point de fonctionnement** publié et cinq apports concrets
+    (garde-fou `NVMC ERASEALL`, *cold-boot-only*, bouton d'amplitude `Rsrc`, oracle `FICR.PART`, bypass
+    transitoire) — développé en [`08`](08_NRF52820_APPROTECT.md) §3bis. ⚠️ **3ᵉ raiden** (ni upstream
+    AdamLaurie, ni fork local v0.14), et **nRF52840, pas 52820**.
+  - **EFM32LG Leopard Gecko** (Silicon Labs, Cortex-M3) : debug-lock levé en fautant le **Debug Lock
+    Word** pendant la fenêtre **`tRESET ≈ 163 µs`**, crowbar sur **`DECOUPLE`** (rail cœur ~1,8 V, LDO
+    interne), `VDD` abaissé à **~2,0 V** pour un dip net ; recovery officielle = **AAP `DEVICEERASE`**
+    (destructive, ne *lit* jamais). ⚠️ **Distinct du write-up LimitedResults EFM32** listé plus bas
+    (deux sources, une même famille). ⚠️ iceman le signale lui-même (*caveats, à vérifier au banc*) :
+    `DPIDR 0x2BA01477` est la valeur **SW-DP générique Cortex-M3/M4** (partagée STM32F1 / LPC17xx) —
+    **exactement celle que le même fork lit sur sa cible nRF52** — donc elle **ne confirme aucune puce** ;
+    l'identification positive est la lecture du mot *Device-Info PART*. Même piège d'oracle qu'au §1.1.
+  - **PIC18** (Microchip, cible **neuve** pour le projet) : ni SWD ni UART → accès **ICSP**
+    (PGC/PGD + MCLR/VPP), entrée **LVP** (clé `"MCHP"` ou broche PGM, **sans VPP 9–13 V**). ★ **Modèle
+    de faute distinct** : la code-protect **gate la sortie du table-latch sur PGD** (une lecture
+    protégée rend `0x00`, la donnée étant *fetchée* mais non sortie) → on faute **le clock-out de
+    lecture**, pas le *fetch* ; crowbar sur **`VDD`** (pas de rail cœur exposé, comme le BAT32G135).
+    Rendement single-shot **~0,24 %**, mais la gate est **ré-évaluée par octet** ⇒ une cellule
+    (delay, width) se rejoue adresse par adresse pour un dump complet — même économie que les campagnes
+    du projet. ⚠️ L'analogue **optique** (bunnie, *Hacking the PIC 18F1320*) est **écarté du corpus** en
+    [`04`](04_REFERENCES.md) §F comme **non-FI** (UV/optique) : ce cas-ci est **voltage/ICSP**, vecteur
+    différent — pas de contradiction. Détail :
+    [`../knowledge_base/by-domain/microcontrollers-mcu.md`](../knowledge_base/by-domain/microcontrollers-mcu.md) §13.
 - **jrainimo — *Dumping Firmware With a 555*** (STM8, voltage) : glitcher réduit à un **NE555**.
   Borne basse absolue du coût, à mettre en regard des ~92 $ de chip.fail et des ~50 $ du PicoGlitcher.
 - **NCC Group — *Glitching the MediaTek BootROM*** (MT8163V, voltage) : trigger produit par un

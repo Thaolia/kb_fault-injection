@@ -108,14 +108,15 @@ la masse commune.
 
 Le crowbar attaque un rail ; encore faut-il savoir **lequel**. Sur un MCU moderne, le cœur est
 alimenté par un **régulateur interne**, et la question décisive est : **ce régulateur expose-t-il une
-broche de découplage accessible ?** Les trois cas documentés du projet donnent les trois réponses
+broche de découplage accessible ?** Les cas documentés du projet donnent les réponses
 possibles, et elles commandent des régimes d'impulsion différents :
 
 | Cible | Broche exposée | Conséquence sur l'impulsion |
 |---|---|---|
 | **STM32 F2/F4/F7** | **`VCAP1`/`VCAP2`** (cœur 1,2–1,8 V) | injection **directe sur le cœur** — `[ref]` Anvil Secure, STM32F401CC : *« a cable was soldered to the VCAP_1 pin to facilitate VFI »* |
 | **Nordic nRF52** | **`DEC1`** (*« definitively the CPU power line »*, 0,8–0,9 V) ; `DEC4` = alim système | idem — et `DEC4` sert en prime de **trigger** `[ref]` LimitedResults |
-| **Cmsemicon BAT32G135** | ★ **aucune** — pas de `VCAP`/`REGC` | injection sur **VDD à travers le LDO** ⇒ impulsions **larges** (centaines de ns à quelques µs), **pas sub-cycle** |
+| **Silicon Labs EFM32LG** | **`DECOUPLE`** (sortie du LDO cœur ~1,8 V) | idem — crowbar sur le cœur pendant `tRESET ≈ 163 µs` ⇒ l'AHB-AP remonte débloqué `[ref]` fork raiden `iceman1001` (voir [`../by-domain/microcontrollers-mcu.md`](../by-domain/microcontrollers-mcu.md) §13) |
+| **Cmsemicon BAT32G135** · **Microchip PIC18** | ★ **aucune** — pas de `VCAP`/`REGC` | injection sur **VDD** (à travers le LDO pour le BAT32 ⇒ impulsions **larges**, pas sub-cycle). ⚠️ Sur PIC18 le crowbar VDD **gate une sortie ICSP**, il ne sous-alimente pas un cœur — §13 |
 
 ★ **Règle à appliquer sur toute nouvelle cible** : chercher dans la datasheet une broche de
 **découplage de régulateur** (`VCAP`, `DEC`, `REGC`, `VCORE`…) **avant** de dimensionner l'étage de

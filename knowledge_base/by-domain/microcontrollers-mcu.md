@@ -351,6 +351,17 @@ nRF52832 et nRF52833**. La liste des six versions vulnérables (52810, 52811, **
 vulnerable »* — la **revendication est de Nordic**, la **liste est du write-up**, et le **nRF52820 est
 couvert par architecture commune, pas par mesure**.
 
+> ★ **Un second banc public existe, et il publie un point de fonctionnement.** Le fork
+> `iceman1001/raiden-pico` (`[ref]`, @ `90b547e`, **non compté dans les 68**) monte exactement cette
+> attaque sur **nRF52840** et apporte cinq faits que LimitedResults tait : garde-fou **`NVMC ERASEALL`**
+> (largeur clampée ≤ 450 cyc), ***cold-boot-only*** (le LDO tient `DEC1` en régime établi ⇒ seule la
+> rampe froide est glitchable), **bouton d'amplitude par la résistance de source** du MOSFET, oracle par
+> **lecture `FICR.INFO.PART`** (APPROTECTSTATUS jugé peu fiable), et **bypass transitoire**. ⚠️ Chiffres
+> **du nRF52840, banc tiers** ⇒ **pas un `[fait]`**, et ils **ne comblent pas** le vide « aucun paramètre
+> publié » du nRF52820. Développé dans
+> [`../../docs/08_NRF52820_APPROTECT.md`](../../docs/08_NRF52820_APPROTECT.md) §3bis. EFM32LG et PIC18 du
+> même fork : §13.
+
 ## 12. Familles supplémentaires attestées `[ref]` (write-ups)
 
 Protection en lecture contournée **par voltage FI** sur : **EFM32 Gecko** (Silicon Labs) ·
@@ -361,6 +372,57 @@ Protection en lecture contournée **par voltage FI** sur : **EFM32 Gecko** (Sili
 **Leur valeur est statistique** : le cas STM32 n'a rien d'une exception.
 ★ **Le nRF52 ne figure plus dans cette liste** — ses deux write-ups ont été lus intégralement et sont
 développés en §11bis.
+
+## 13. EFM32LG & PIC18 — deux cibles outillées par le fork raiden `iceman1001` `[ref]`
+
+> **Nature : `[ref]`** — docs d'outil du fork `iceman1001/raiden-pico` (`feat/unique-dump-paths`
+> @ `90b547e`), cité par URL SHA-figée, **non compté dans les 68**. Même moteur crowbar RP2350 que ce
+> projet. ⚠️ **3ᵉ raiden**, distinct de l'upstream AdamLaurie et du fork local v0.14. Le volet
+> **nRF52840** du même fork est traité en §11bis et dans
+> [`../../docs/08_NRF52820_APPROTECT.md`](../../docs/08_NRF52820_APPROTECT.md) §3bis.
+
+### EFM32LG Leopard Gecko (Silicon Labs, Cortex-M3 @ 48 MHz)
+
+L'**analogue EFM32 de l'APPROTECT nRF et de la RDP STM32**, dit tel quel par la source. Le debug est
+verrouillé par un **Debug Lock Word (DLW)** en page de lock-bits (`0x0FE0_4000`), **latché par le MSC
+pendant `tRESET ≈ 163 µs`** au boot. Un crowbar sur **`DECOUPLE`** (sortie du LDO cœur ~1,8 V) pendant
+cette fenêtre faute l'évaluation du DLW ⇒ l'**AHB-AP** remonte *enabled* et la flash se lit en SWD
+**sans** déclencher l'effacement de masse. Points réutilisables :
+
+- **`DECOUPLE` est un 4ᵉ rail cœur nommé**, après `VCAP` (STM32), `DEC1` (nRF52) et « aucune » (BAT32) —
+  voir la généralisation [`../by-vector/voltage-glitching.md`](../by-vector/voltage-glitching.md) §3.
+- **Recovery officielle = AAP `DEVICEERASE`** : elle efface tout et **ne lit jamais** (même rôle que
+  l'`ERASEALL` CTRL-AP du nRF52 en §11bis, ou le chip-erase du BAT32 en §10bis) — voie destructive, pas
+  l'attaque.
+- **`VDD` abaissé à ~2,0 V** pour un dip plus net ; ⚠️ garder l'impulsion **sub-µs** pour qu'un reset
+  BOD propre (seuil 1,74–1,96 V) n'avorte pas la tentative.
+- ⚠️ **`DPIDR 0x2BA01477` ne confirme aucune puce** : iceman le classe lui-même en *caveat à vérifier
+  au banc*, et c'est la valeur **SW-DP générique Cortex-M3/M4** (partagée STM32F1 / LPC17xx) — **la même
+  que celle que ce fork lit sur sa cible nRF52**. L'identification positive est la lecture du mot
+  *Device-Info PART*. **Même piège d'oracle** que la leçon « valider l'instrument » de
+  [`../../docs/03_METHODOLOGIE_CAMPAGNE.md`](../../docs/03_METHODOLOGIE_CAMPAGNE.md) §1.1.
+- ⚠️ **Distinct du write-up LimitedResults EFM32** de §12 : deux sources, une même famille.
+
+### PIC18 (Microchip) — cible neuve, modèle de faute distinct
+
+Le PIC18 n'a **ni SWD ni UART** : la mémoire programme passe par **ICSP** (horloge PGC + donnée PGD +
+MCLR/VPP). ★ **Le modèle de faute n'est pas un creux de rail cœur** : quand les bits de code-protect
+(`CONFIG5L`) sont posés, une lecture de table d'un bloc protégé rend **`0x00`** — la donnée **est bien
+chargée dans le table-latch**, la protection ne faisant que **gater sa sortie sur PGD**. L'attaque
+**faute ce gate pendant le clock-out de lecture** ⇒ le vrai octet apparaît. Faits réutilisables :
+
+- **Crowbar sur `VDD`** — le PIC18 **n'expose aucune broche de rail cœur**, comme le BAT32G135
+  (§10bis) : c'est la **branche « aucune »** de
+  [`../by-vector/voltage-glitching.md`](../by-vector/voltage-glitching.md) §3. ★ Mais noter que le
+  **but du glitch diffère** : gater une sortie d'E/S, pas sous-alimenter un cœur.
+- **Entrée LVP sans haute tension** : clé 32 bits `"MCHP"` sur PGD **ou** broche RB5/PGM maintenue
+  haute (deux variantes selon le silicium), **pas de VPP 9–13 V** — accès par simples GPIO.
+- **Économie « une cellule, un dump »** : rendement single-shot **~0,24 %**, mais la gate est
+  **ré-évaluée par octet** ⇒ une bonne cellule (delay, width) se **rejoue adresse par adresse** pour la
+  mémoire entière — même logique que « une faute réussie suffit » ailleurs dans ce fichier.
+- ⚠️ **L'analogue optique** (bunnie, *Hacking the PIC 18F1320*) est **écarté du corpus** en
+  [`../../docs/04_REFERENCES.md`](../../docs/04_REFERENCES.md) §F comme **non-FI** (UV) ; ce cas-ci est
+  **voltage/ICSP**, vecteur différent — pas de contradiction.
 
 ---
 
