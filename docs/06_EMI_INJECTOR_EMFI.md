@@ -1048,7 +1048,7 @@ coupure**.
 - **Trouchkine, Bukasa, Escouteloup, Lashermes, Bouffard** — *Electromagnetic fault injection against a
   complex CPU, toward new micro-architectural fault models*, JCEN 11(4):353–367, 2021 —
   `docs_pdf/hal-03175704_Trouchkine_EMFI-complex-CPU.pdf` (**BCM2837 / Raspberry Pi 3, bare-metal** —
-  ⚠️ **pas** un Intel Core i3 : voir la correction en §7). HAL : https://hal.science/hal-03175704
+  ⚠️ **pas** un Intel Core i3 : voir la correction en §7). HAL : https://hal.science/hal-03175704 · archive : https://web.archive.org/web/20260616005352/https://hal.science/hal-03175704
 - **Beckers, Kinugawa, Hayashi, Fujimoto, Balasch, Gierlichs, Verbauwhede** (imec-COSIC KU Leuven,
   KOSEN Sendai, NAIST) — *Design Considerations for EM Pulse Fault Injection*, 16 p. —
   `docs_pdf/2019_COSIC_Design-Considerations-for-EM-Pulse-FI_B.pdf` (**seul EMFI sur STM32 du corpus**
@@ -1059,7 +1059,8 @@ coupure**.
 - **Pareja, Wiersma** (Riscure) — *Safety != security: On the resilience of ASIL-D certified
   microcontrollers against fault injection attacks*, **deck** FDTC 2017 (70 sl.) —
   `docs_pdf/2017_FDTC_Safety-not-Security_PW.pdf` (chiffres ASIL-D de première main, §1.2). Source :
-  https://fdtc.deib.polimi.it/FDTC17/shared/FDTC%202017%20-%20session%201.2.pdf
+  https://fdtc.deib.polimi.it/FDTC17/shared/FDTC%202017%20-%20session%201.2.pdf · archive 2026-10-05 :
+  https://web.archive.org/web/20261005001656/https://fdtc.deib.polimi.it/FDTC17/shared/FDTC%202017%20-%20session%201.2.pdf
 
 **Sources publiques (`[ref]`)** :
 - **Trouchkine, Bouffard, Clédière** — *Fault Injection Characterization on Modern CPUs — From the ISA
@@ -1078,11 +1079,11 @@ coupure**.
 - **FaultyCat** (Electronic Cats, `[ref]`) — wiki : https://github.com/ElectronicCats/faultycat/wiki/ ·
   RP2040, ~240 V, coque plastique, sortie isolée, V2.1 trigger externe (firmware/host : voir bullet suivant).
 - **FaultyCat v3 — firmware + host** (`[ref]`, sources primaires vérifiées) — firmware :
-  https://github.com/ElectronicCats/FaultyCat-Firmware · host (ex-FaultyCMD) :
+  https://github.com/ElectronicCats/FaultyCat-Firmware (archive 2026-10-05 : https://web.archive.org/web/20261005001713/https://github.com/ElectronicCats/FaultyCat-Firmware) · host (ex-FaultyCMD) :
   https://github.com/ElectronicCats/faultycat-TUI · **délai programmable `delay_us` 0–1 000 000 µs sur
   trigger externe** (GP8 `TRIGGER_IN`, seuil `TRIGGER_VREF`, 5 polarités), mode **Campaign** (balayage
   délai/largeur, tick PIO 8 ns), mode **Crowbar** (voltage-glitch) en plus de l'EMFI.
-- **Bus Pirate 5** (Dangerous Prototypes / SMD Prutser, `[ref]`) — doc : https://docs.buspirate.com ·
+- **Bus Pirate 5** (Dangerous Prototypes / SMD Prutser, `[ref]`) — doc : https://docs.buspirate.com (archive : https://web.archive.org/web/20260719165921/https://docs.buspirate.com) ·
   RP2040 ; PSU programmable **1–5 V / 300 mA** (`W`/`w` on/off, `v` lit V et I) ; **8 IO** bufferisées
   avec mesure de tension par pin ; UART (5–8 bits, parité None/Even/Odd, 1–2 stop → **8E1** possible),
   détection SWD/JTAG. → banc de support EMFI, cf. §5.2.

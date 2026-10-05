@@ -98,7 +98,7 @@ L'**ADP3623 reste attribuable à Bozzato seul**.
 ## Sources (téléchargées le 2026-08-18, sauf mention contraire)
 
 - RP2350 — https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf
-- **Pico 2 W** *(téléchargée le **2026-09-16**)* — https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf
+- **Pico 2 W** *(téléchargée le **2026-09-16**)* — https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf · archive : https://web.archive.org/web/20250913034839/https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf
   (`%PDF` ✓, **24 pages** ✓, réf. imprimée **RP-008304-DS-3**). ⚠ Il n'existe **pas** d'errata
   RP2350 en PDF séparé : `rp2350-errata.pdf` répond **404** — l'erratum **E9 est une section de
   la datasheet RP2350 elle-même**, déjà présente ici.
@@ -150,7 +150,8 @@ sur GitHub par un tiers**. Téléchargés et validés le **2026-08-30**.
 - **Datasheet §1.3, p. 6-9** — brochages : SWDIO = `P40`, SWCLK = `P137`, **aucune broche `VCAP`/`REGC`**.
 - **Datasheet §6.8.5, p. 61** — POR : `VPDR` 1,37–1,45 V et **largeur minimale de 300 µs**.
 
-> Sources amont : datasheet — `https://www.axtekic.com/web/uploads/file/20230506/UK39o0N9kBX7I98V37u0g3A6r1J2FbY4.pdf` ;
+> Sources amont : datasheet — `https://www.axtekic.com/web/uploads/file/20230506/UK39o0N9kBX7I98V37u0g3A6r1J2FbY4.pdf`
+> (archive 2026-10-05 : https://web.archive.org/web/20261005002033/https://www.axtekic.com/web/uploads/file/20230506/UK39o0N9kBX7I98V37u0g3A6r1J2FbY4.pdf) ;
 > manuel + SVD — pack CMSIS `Cmsemicon.BAT32G135.0.2.1` via `github.com/Gnailliang/BAT32G135-ADC`.
 
 ---

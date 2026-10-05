@@ -123,7 +123,7 @@ C'est **la** cible favorable de ce document, et la seule dont le régime de prot
 non supposé**. Source : **photos internes du dossier FCC** du dongle — rapport **Bureau Veritas
 réf. 200615E03, pages 4/5 et 5/5** — où le marquage du composant est lisible à la loupe sur deux
 clichés distincts. `[ref]` FCC ID **JNZCU0021** (*Wireless USB dongle*, Logitech Far East Ltd,
-autorisation du **12 août 2020**, BLE + GFSK 2,4 GHz), https://fccid.io/JNZCU0021
+autorisation du **12 août 2020**, BLE + GFSK 2,4 GHz), https://fccid.io/JNZCU0021 (archive 2026-10-05 : https://web.archive.org/web/20261005001635/https://fccid.io/JNZCU0021)
 
 ### 1bis.1 ★★ Le marquage, décodé champ par champ
 
