@@ -1,0 +1,22 @@
+# === Papiers du corpus — PDF tiers sous copyright, NON redistribués publiquement ===
+# Les 68 papiers sont cités par titre / page / URL dans docs/04_REFERENCES.md et
+# restent re-téléchargeables depuis leurs sources (arXiv, IACR, HAL, sites de conférence).
+docs_pdf/
+
+# === Datasheets & specs constructeur (copyright vendeur) ===
+# Indexées avec specs vérifiées dans datasheet/README.md ; sources officielles citées.
+datasheet/**/*.pdf
+
+# === Artefacts de banc (hors dépôt par principe, cf. CLAUDE.md) ===
+*.tgz
+*.tar.gz
+tplink_tapo_bootloader_dump/
+
+# === Cruft ===
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/
+
+# Config Claude Code locale du projet
+.claude/

@@ -1,0 +1,86 @@
+# Index de citations & faits — RECESSIM, "Hacking an Automotive ECU!" (2025-06-14, 1h21)
+# Source : https://www.youtube.com/watch?v=0tkdst3JE0g (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2025-08-24 :
+#   https://web.archive.org/web/20250824123341/https://www.youtube.com/watch?v=0tkdst3JE0g
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits techniques en paraphrase courte, avec
+# l'horodatage permettant de retrouver le passage exact dans les .json3/.vtt complets conservés
+# dans ce dossier (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+# Aucune citation verbatim de l'ASR.
+#
+# ⚠ TRANSCRIPTION AUTOMATIQUE : l'ASR déforme systématiquement noms propres et nombres. Tout
+# chiffre / référence / nom propre ci-dessous est marqué "non recoupé" sauf vérification
+# indépendante explicite. Ne jamais porter un chiffre d'ici dans une BOM ou un schéma sans
+# vérification — cf. docs/02_BOM_MATERIEL.md, qui n'accepte aucune donnée d'origine ASR.
+#
+# RECOUPEMENT CONFIRMÉ : le présentateur cite explicitement le papier `[corpus]`
+# docs_pdf/2020-937.pdf (O'Flynn, "BAM BAM!!...") comme référence de méthode, et reproduit
+# l'attaque sur la même puce MPC5566 / même bootloader BAM, avec un matériel différent.
+# Exploité dans docs/06_EMI_INJECTOR_EMFI.md §1.2.
+
+## Cible et recoupement avec le corpus
+
+[00:57] Mandat reçu : attaquer une puce MPC5566 utilisée dans des ECU automobiles.
+[01:56–02:03] Le papier "BAM Bam" d'O'Flynn est utilisé comme manuel de référence de l'attaque.
+[02:56–05:08] Protocole BAM : mot de passe caractère par caractère, puis adresse, taille, payload —
+  accessible via UART ou via bus CAN.
+[09:32–09:45] Le bloc est nommé "boot access module" à l'oral ; la documentation constructeur
+  NXP/Freescale le nomme "Boot Assist Module". Écart non recoupé (glissement de l'orateur ou ASR).
+[58:39–59:38] ECU ciblés : désignations GM E39 (~65 $) et E39A (~30 $) trouvées sur des forums de
+  tuning ; les E39A portent un marquage puce ré-étiqueté (lu "SGM PPC", orthographe non recoupée).
+[1:00:48–1:01:40] Identité réelle de la puce confirmée par décapsulation à l'acide nitrique fumant
+  + lecture du marquage du die au microscope : c'est bien du MPC5566 sous ré-étiquetage custom.
+
+## Matériel et paramètres (tous non recoupés sauf mention)
+
+[18:16–18:54] Comparaison d'outillage : ChipSHOUTER (~4000 $, utilisé par O'Flynn) contre PicoEMP
+  (~50 $, plafond 250 V, utilisé ici) ; ChipSHOUTER cité à 500 V de plafond.
+[18:32–18:36] Tension citée du papier de référence : 444 V — cohérent avec la lecture directe du
+  PDF faite pour ce projet (Table 1, p. 12), donc recoupé de notre côté.
+[18:03], [25:26–25:39], [1:11:09–1:11:33] ChipWhisperer utilisé comme orchestrateur/timing.
+[30:42–31:00] Sonde : tige ferrite ~3 mm, 4 spires enroulées à la main.
+[20:42–21:34] Montage mécanique : pince magnétique de machiniste, pas de platine XYZ de précision —
+  contraste explicite avec un banc de laboratoire.
+[45:05–45:34] 250 V utilisés pour obtenir un accès JTAG partiel (flash restée verrouillée, lecture
+  à zéro).
+[54:35–55:12] Glitch réussi via le bus CAN à seulement ~60 V — très inférieur aux 444 V du papier
+  (attaque UART). Souligné comme surprenant par l'orateur lui-même.
+[53:51–53:58] Fenêtre de répétition d'un glitch CAN réussi : ~10 à 15 minutes, répétable.
+[24:53–25:19] Pin "clock out" : fréquence nominale ~12 MHz, dérive observée jusqu'à ~16 MHz sous
+  glitch avant chute à zéro.
+
+## Méthodologie transférable au projet
+
+[08:54–09:25] "Broom method" : câble de cuivre dénudé balayé en traînée sur la carte pour localiser
+  des pins inconnus par détection sonore de continuité, avant de zoomer sur la zone.
+[07:03–08:00] Dessoudage BGA au heat gun pratiqué sur une carte de sacrifice (seconde carte morte
+  obtenue exprès) plutôt que de risquer l'unique carte cible.
+[24:53–27:15] ★ Détection "no-code" d'un glitch réussi : observation à l'oscilloscope d'une
+  dérive/interruption du pin clock-out du MCU, sans écrire aucun firmware de test. Découverte en
+  tentant de synchroniser le ChipWhisperer sur ce même signal.
+[12:12–13:16] Entrée en mode BAM : nécessite un pin "boot config" ET un registre "reset config" —
+  ce dernier absent du papier d'O'Flynn selon l'orateur (chiffres de comptage non recoupés).
+[08:14–08:38] Sur cette génération, le pin de boot externe n'est pas désactivable ; les générations
+  plus récentes permettraient de le désactiver (contre-mesure) — affirmation orale non recoupée,
+  mais cohérente avec ce que documente le papier O'Flynn `[corpus]` (p. 3, p. 16).
+[41:24–49:00] ★ Contournement du flooding CAN : un contrôleur CAN retransmet en boucle si aucun ACK
+  n'est reçu, ce qui casse tout glitch précis sur un message unique → passage par un mode "one-shot"
+  d'un contrôleur CAN dédié (les adaptateurs USB-CAN du commerce ne le supportaient pas).
+[1:08:15–1:09:50] ★ Contrainte ECC mémoire : le code injecté ne s'exécute pas si toute la RAM/pile
+  utilisée n'est pas initialisée au préalable → contourné en envoyant un bloc de zéros avant le code.
+[1:11:05–1:14:00] Séquence matérielle finale : ChipWhisperer pilote reset + surveille l'horloge ;
+  un Arduino envoie le message 1 (mot de passe) ; un décodeur CAN séparé lit ce message en direct
+  sur le fil pour caler le déclenchement du pulse EMFI ; puis message 2 (adresse + taille).
+[1:15:02–1:16:04] Exfiltration via IDs d'arbitration CAN dédiés : 100/101 = code BAM, 200/201 = zone
+  "shadow" contenant le mot de passe, 300/301 = flash complète.
+[59:59–1:00:33] Astuce de sourcing : les revendeurs d'outils de chip-tuning publient des photos de
+  cartes ouvertes avec pins CAN/boot déjà identifiés — évite la broom method.
+
+## Coûts et durées cités (non recoupés)
+
+[48:38–48:45] Solution CAN one-shot DIY : Arduino ~13 $ + shield CAN ~7 $.
+[57:54–57:59] Carte de développement MPC officielle (non achetée) : ~2000 $.
+[1:18:06–1:18:12] Durée réelle du projet : 65 jours, contre 5 jours devisés initialement.
+[1:18:38–1:18:53] Aucune corruption de flash observée après "des milliers" de glitchs EMFI.
+[1:18:53–1:19:29] Contre-exemple d'un autre projet (puce SAM4C32, voltage glitching et non EMFI) :
+  un glitch de tension trop long avait corrompu la flash — cible et vecteur différents.

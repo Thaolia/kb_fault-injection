@@ -1,0 +1,34 @@
+digraph interfaces {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t, ranksep=2.2,
+         label="Bloc D — Interfaces RP2350 ↔ STM32 (même niveau 3,3 V → pas de level-shift)"];
+  node [fontname="DejaVu Sans", shape=record, style=filled, fontsize=12];
+  edge [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  RP [fillcolor="#dbe9ff", label="RP2350 / Pico 2 |\
+ <swclk>GP10  SWCLK |\
+ <swdio>GP11  SWDIO |\
+ <tx>GP8  UART_TX |\
+ <rx>GP9  UART_RX |\
+ <boot>GP6  BOOT0 |\
+ <nrst>GP5  NRST |\
+ <gnd>GND"];
+
+  T [fillcolor="#eaf3ff", label="STM32 cible |\
+ <swclk>SWCLK |\
+ <swdio>SWDIO |\
+ <rx>RX |\
+ <tx>TX |\
+ <boot>BOOT0 |\
+ <nrst>NRST |\
+ <gnd>GND"];
+
+  RP:swclk -> T:swclk;
+  RP:swdio -> T:swdio [label="R 33 Ω"];
+  RP:tx -> T:rx [label="croisé"];
+  RP:rx -> T:tx [label="croisé"];
+  RP:boot -> T:boot [label="R 10 k"];
+  RP:nrst -> T:nrst [dir=both, label="open-drain"];
+  RP:gnd -> T:gnd [label="masse commune", color="#c0392b", penwidth=2];
+}

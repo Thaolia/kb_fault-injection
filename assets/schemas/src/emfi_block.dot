@@ -1,0 +1,36 @@
+digraph emfi {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Module EMFI — 5 V → HT → bobine (piloté RP2350)", nodesep=0.5, ranksep=0.9];
+  node [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=12, margin="0.15,0.1"];
+  edge [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  RP  [label="RP2350\n(PWM charge · PIO trigger · ADC status · ARM)", fillcolor="#dbe9ff"];
+  V5  [label="5 V", shape=oval, fillcolor="#eeeeee"];
+  GDT [label="GDT\n(isolation)", fillcolor="#ede7f6"];
+
+  subgraph cluster_hv {
+    label="côté HT flottant / isolé";
+    style="dashed,rounded"; color="#c0392b";
+    fontname="DejaVu Sans"; fontcolor="#c0392b"; fontsize=12;
+    BOOST [label="Boost / flyback HT", fillcolor="#fff3e0"];
+    CAP   [label="Condo HT\nfaible ESR", fillcolor="#e8f5e9"];
+    SW    [label="Switch HT\n(SCR / IGBT / avalanche)", fillcolor="#fde7e9"];
+    BLEED [label="R purge\n(bleed)", style="rounded,filled,dashed", fillcolor="#f5f5f5"];
+    COIL  [label="Bobine\nd'injection", fillcolor="#e3f2fd"];
+  }
+
+  T [label="CIBLE\n(champ proche)", fillcolor="#eaf3ff"];
+
+  V5    -> BOOST [label="5 V"];
+  RP    -> BOOST [label="HV_PWM"];
+  BOOST -> CAP   [label="250 V – 1 kV"];
+  CAP   -> SW    [label="décharge"];
+  CAP   -> BLEED [style=dashed, dir=none];
+  RP    -> GDT   [label="HV_PULSE (PIO)"];
+  GDT   -> SW    [label="arme"];
+  SW    -> COIL;
+  COIL  -> T     [label="impulsion", penwidth=2.2, color="#c0392b"];
+  CAP   -> RP    [label="HV_STATUS", style=dotted, constraint=false];
+}

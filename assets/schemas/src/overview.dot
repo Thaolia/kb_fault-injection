@@ -1,0 +1,29 @@
+digraph overview {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Schéma d'ensemble — glitcher RP2350 → STM32", nodesep=0.5, ranksep=0.9];
+  node [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=12, margin="0.15,0.1"];
+  edge [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  RP [label="RP2350 / Pico 2\n(PIO · SPI · UART · ADC)", fillcolor="#dbe9ff"];
+  A  [label="Bloc A\nLoad switch\n(power-cycle)", fillcolor="#e8eaf6"];
+  B  [label="Bloc B\nCrowbar\n(driver + N-MOSFET)", fillcolor="#fff3e0"];
+  C  [label="Bloc C\nTrigger\n(comparateur)", fillcolor="#f3e5f5"];
+  D  [label="Bloc D\nInterfaces\n(SWD/UART/NRST)", fillcolor="#e0f2f1"];
+  E  [label="Bloc E · option\nPalier 2 AGW\n(DAC + ampli + reed)", fillcolor="#e8f5e9"];
+  T  [label="STM32 cible\n(dessoudé,\ndécouplage minimal)", fillcolor="#eaf3ff"];
+
+  RP -> B [label="GP2 GLITCH_OUT (PIO)"];
+  RP -> A [label="GP3 LOADSW_EN"];
+  C  -> RP [label="GP4 TRIG_IN (PIO)"];
+  RP -> D [label="SWD/UART/NRST/BOOT0", dir=both];
+  RP -> E [label="SPI + GP12"];
+  A  -> B [label="Vin"];
+  B  -> T [label="VDD ou VCAP (J-RAIL)", penwidth=2.2, color="#c0392b"];
+  E  -> T [label="forme d'onde", style=dashed];
+  T  -> C [label="I/O · NRST"];
+  D  -> T [dir=both, style=dotted];
+
+  { rank=same; A; B; }
+}

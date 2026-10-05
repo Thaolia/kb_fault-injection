@@ -1,0 +1,21 @@
+digraph faultycat {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Intégration RP2350 → FaultyCat (EMFI, Palier A ~240 V)", nodesep=0.5, ranksep=1.0];
+  node [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=12, margin="0.15,0.1"];
+  edge [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  RP   [label="RP2350 / Pico 2\n(moteur timing :\ntrigger-in · délai PIO · trigger-out)", fillcolor="#dbe9ff"];
+  FC   [label="FaultyCat (Electronic Cats)\nRP2040 · ~240 V · MicroPython/FaultyCMD\ncoque plastique · sortie isolée", fillcolor="#e8f5e9"];
+  COIL [label="bobine\n(champ proche)", fillcolor="#e3f2fd"];
+  T    [label="Cible\nSTM32 / EFR32 / ESP32", fillcolor="#eaf3ff"];
+
+  T  -> RP   [label="I/O · NRST\n(source de trigger)"];
+  RP -> FC   [label="trigger externe (délai PIO) — V2.1", color="#c0392b", penwidth=2.2];
+  FC -> COIL [label="charge + PULSE (~240 V)"];
+  COIL -> T  [label="impulsion EM (local)", color="#c0392b", penwidth=2.2];
+  RP -> T    [label="SWD / UART (commandes, lecture)", dir=both, style=dashed, constraint=false];
+
+  { rank=same; FC; COIL; }
+}

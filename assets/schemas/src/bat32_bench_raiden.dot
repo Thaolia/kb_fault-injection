@@ -1,0 +1,32 @@
+digraph bat32_bench_raiden {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Banc BAT32G135 — variante à 2 outils : raiden-pico (RP2350) remplace alim + oracle",
+         nodesep=0.45, ranksep=1.5];
+  node  [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=11, margin="0.16,0.11"];
+  edge  [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  RP [label="raiden-pico (RP2350 / Pico 2)\nTIMING 6,67 ns + RESET + SWD\nSET PAUSE/WIDTH en cycles 150 MHz\nSWD CONNECTRST = la primitive de course\n⚠ TARGET RESET nu = exécute ; avec args = configure",
+      fillcolor="#dbe9ff"];
+  MOS [label="crowbar\nN-MOSFET AO3400A\n(ou FaultyCat GP16\npiloté depuis GP2)", fillcolor="#fff4e5"];
+
+  DUT [shape=plaintext, fillcolor="none", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#eaf3ff">
+      <TR><TD COLSPAN="3" BGCOLOR="#c9dcf5"><B>BAT32G135 (cible)</B></TD></TR>
+      <TR><TD PORT="vdd" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>VDD</B></TD><TD ALIGN="LEFT">alim + injection</TD><TD ALIGN="LEFT">7 · 9 · 11</TD></TR>
+      <TR><TD PORT="vss" ALIGN="LEFT">VSS</TD><TD ALIGN="LEFT">masse</TD><TD ALIGN="LEFT">6 · 8 · 10</TD></TR>
+      <TR><TD PORT="swdio" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>P40</B></TD><TD ALIGN="LEFT"><B>SWDIO</B></TD><TD ALIGN="LEFT">1 · 1 · 3</TD></TR>
+      <TR><TD PORT="swclk" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>P137</B></TD><TD ALIGN="LEFT"><B>SWCLK</B> (obligatoire)</TD><TD ALIGN="LEFT">3 · 5 · 7</TD></TR>
+      <TR><TD PORT="rst" ALIGN="LEFT">RESETB</TD><TD ALIGN="LEFT">actif bas</TD><TD ALIGN="LEFT">2 · 2 · 4</TD></TR>
+      <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>★ découplage VDD RETIRÉ</B></TD></TR>
+    </TABLE>>];
+
+  RP -> DUT:rst   [label="GP15 → RESETB", color="#2e7d32", penwidth=2.0];
+  DUT:rst -> RP   [label="RESETB → GP3\n(entrée trigger, fixe)", style=dashed, color="#e07b00", constraint=false];
+  RP -> MOS       [label="GP2 (ou GP11 en TARGET POWER EXT)\n⚠ vérifier la polarité de repos\nà l'oscillo, MOSFET débranché", color="#c0392b"];
+  MOS -> DUT:vdd  [label="crowbar", color="#c0392b", penwidth=2.6];
+  RP -> DUT:swclk [label="GP17 → SWCLK ★", color="#1565c0", penwidth=2.0];
+  RP -> DUT:swdio [label="GP18 ↔ SWDIO ★", dir=both, color="#1565c0", penwidth=2.0];
+  DUT:vdd -> RP   [label="GP26 ADC0 (pont diviseur)", style=dashed, color="#7b1fa2", constraint=false];
+}

@@ -1,0 +1,93 @@
+# Index de citations & faits — RECESSIM, "SuperCharging the PicoEMP - Building a SERIOUS Hacking
+# Tool!" (2026-06-07, 1h24)
+# Source : https://www.youtube.com/watch?v=-WiIupSWss4 (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2026-07-08 :
+#   https://web.archive.org/web/20260708062832/https://www.youtube.com/watch?v=-WiIupSWss4&feature=youtu.be
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits techniques en paraphrase courte, avec
+# l'horodatage permettant de retrouver le passage exact dans les .json3/.vtt complets conservés
+# dans ce dossier (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+# Aucune citation verbatim de l'ASR.
+#
+# ⚠ TRANSCRIPTION AUTOMATIQUE : tout chiffre / référence / nom propre est marqué "non recoupé" sauf
+# vérification indépendante explicite. Rien d'ici n'entre dans docs/02_BOM_MATERIEL.md.
+#
+# Modification TIERCE du PicoEMP, non affiliée à NewAE/O'Flynn. Exploité dans
+# docs/06_EMI_INJECTOR_EMFI.md §2.1.
+
+## Nature de la modification
+
+[06:06–06:14] Le circuit de charge HT interne du PicoEMP (comparé par l'orateur au flash d'un
+  appareil photo jetable) est contourné, pas remplacé physiquement.
+[19:06] Une alimentation HT externe est soudée directement aux bornes du condensateur HT de la carte.
+[18:41–19:06] MOSFET et condensateur HT d'origine conservés : leurs datasheets sont consultés à
+  l'écran et jugés suffisamment dimensionnés pour dépasser 250 V.
+[18:49], [18:57] MOSFET annoncé tenu jusqu'à 650 V ; condensateur HT donné pour 630 V — références
+  exactes non nommées à l'oral, donc non recoupées.
+[26:04–26:37] Le Raspberry Pi Pico pilote d'origine est débranché : la carte est commandée
+  directement au niveau MOSFET par un ChipWhisperer Husky (trigger précis, largeur en ns).
+
+## Alimentation haute tension employée
+
+[24:02] Modèle identifié : Bio-Rad PowerPac 3000Xi (alimentation d'électrophorèse de laboratoire,
+  rachetée d'occasion). ★ RECOUPÉ indépendamment sur la fiche constructeur officielle Bio-Rad.
+[23:31], [44:36] Plage annoncée à l'oral : 20 à 3000 V. La fiche officielle donne 25–3000 V DC,
+  programmable par pas de 1 V à partir de 50 V — léger écart avec le "20 V" oral.
+[23:39] Puissance 400 W — recoupé sur la fiche officielle.
+[39:10], [41:08] Le contrôleur d'origine de cette alimentation (processeur Motorola 6800) est
+  remplacé par un Raspberry Pi Pico, après rétro-ingénierie du bus vers le DAC/optocoupleurs.
+[43:47–44:53] Résolution du DAC de pilotage : 12 bits (0–4095), ~0,7 V par incrément — auto-cohérent
+  avec la plage annoncée, mais non recoupé indépendamment.
+
+## Performances démontrées
+
+[28:33–28:58] 100 impulsions/seconde à 250 V, forme d'impulsion stable (gain ×100 vs ~1 imp/s stock).
+[36:15–37:21] 1000 impulsions/seconde à 500 V, tenu en continu ~24 à 25 minutes avec ventilateur.
+[29:56–30:04], [36:23–36:32] Température MOSFET : ~50 °C à un régime intermédiaire, ~140 °C au
+  régime 1000 imp/s à 500 V.
+[56:53–57:52] Comparaison à l'oscilloscope de trois traces : PicoEMP stock (impulsion irrégulière),
+  PicoEMP modifiée (impulsion nette), ChipShouter de référence (~100 ns net).
+[57:52–58:24] ChipShouter (emprunté, non modifié) testé à 5000 impulsions/seconde sans
+  refroidissement actif pendant la démonstration.
+[52:28–54:15] Conclusion de l'orateur : le dispositif modifié ne remplace pas un ChipShouter
+  (répétabilité, mesures embarquées, driver de grille supérieurs) mais comble le vide entre le
+  PicoEMP stock (~1 imp/s) et le ChipShouter pro (>1000 imp/s, ~5000 $).
+
+⚠ AUCUNE CIBLE RÉELLE N'EST ATTAQUÉE avec le dispositif modifié dans cette vidéo — uniquement des
+  bancs de mesure. Les seules attaques réussies évoquées [03:28–03:53] concernent un talk antérieur,
+  réalisé avec un PicoEMP STOCK non modifié, à 1 impulsion/seconde.
+
+## Sécurité
+
+[07:53–08:01] Rappel : toujours supposer un condensateur chargé, même après coupure et même après
+  un court-circuit apparent au tournevis.
+[42:16–42:57] ★ Ne jamais avoir l'ordinateur de mesure branché au secteur en même temps que
+  l'alimentation HT — risque de boucle de masse pouvant détruire l'alimentation ou le portable.
+  Isoler ("float") le montage de mesure.
+[37:38] Au régime 1000 imp/s à 500 V sans ventilation soutenue : emballement thermique et
+  autodestruction du MOSFET.
+[1:07:31–1:08:29] ★ Le PicoEMP est conçu sans dissipateur exposé au dos du MOSFET, délibérément,
+  pour éviter les chocs électriques à l'utilisateur — la modification dégrade donc cette protection
+  d'origine en poussant plus de puissance dans un boîtier non prévu pour ça.
+
+## Coûts cités (non recoupés, fourchette incohérente en interne)
+
+[51:03] PicoEMP : 50 $. [51:12–51:28] Alimentation : ~150 $ au récapitulatif final, mais l'orateur
+  précise en trouver sous les 100 $ d'occasion ; ailleurs [29:06] il mentionne ~50-70 $ livré pour
+  son propre exemplaire. Incohérence interne → traiter comme fourchette, pas comme prix ferme.
+[51:44] Câbles, résistances, condensateurs, ventilateur : ~50 $ supplémentaires.
+[52:01–52:17] Platine XY motorisée optionnelle : quelques centaines de dollars, explicitement NON
+  nécessaire (l'orateur a fait tout son travail antérieur sonde tenue à la main).
+[05:50], [16:36] Point de comparaison marché : ChipShouter à 5000 $.
+
+## Ressources mentionnées (URL jamais énoncées à l'oral — noms seuls, non recoupés)
+
+[1:16:14–1:16:22] Dépôt GitHub personnel de l'orateur (nom transcrit "Bitbanging Bytes") contenant
+  un contrôleur pour l'alimentation Bio-Rad. Recherche web infructueuse pour le retrouver → à
+  vérifier via la description YouTube de la vidéo.
+[24:02], [41:16], [44:53], [46:21] Wiki RECESSIM : fiche sur le Bio-Rad 3000Xi, détail des
+  signaux/timings DAC, pinout du connecteur exploité.
+[1:03:53–1:05:36] Le schéma du ChipShouter est open-source hardware — évoqué comme inspiration pour
+  une future "carte d'attaque" épurée, non construite dans cette vidéo.
+[46:37–46:55] Bug firmware connu non corrigé au moment de la démo : après ~5 minutes, la commande de
+  réglage de tension cesse de répondre ; contournement par les commandes HVD puis HVE.

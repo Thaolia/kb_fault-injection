@@ -1,0 +1,86 @@
+# Index de citations & faits — hardwear.io USA 2024, Brian Ledbetter,
+# "Secrets Of Simos18: REng The Secure Boot Mechanism Of An ECU" (2024-07-16, 41 min)
+# Source : https://www.youtube.com/watch?v=UgskMSLLgpo (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2025-09-05 :
+#   https://web.archive.org/web/20250905144937/https://www.youtube.com/watch?v=UgskMSLLgpo
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits en paraphrase courte, avec l'horodatage
+# permettant de retrouver le passage exact dans les .json3/.vtt complets conservés dans ce dossier
+# (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+#
+# ★ CLASSIFICATION : HORS PÉRIMÈTRE fault injection du projet. L'attaque est une exploitation
+# LOGICIELLE PURE (bug de state machine, PRNG faible, oracle CRC). Accès physique non-électrique
+# uniquement (bodges de câblage, masse forcée sur bus I²C) — JAMAIS de perturbation électrique
+# (voltage / clock / EMFI). Vérifié par recherche exhaustive des termes fault/glitch/brownout/
+# spike/pulse/crowbar/undervolt sur toute la transcription : les seules occurrences de "fault" sont
+# des bus faults matériels du contrôleur flash, et "clock" concerne un comptage de cycles PWM.
+# Même classification que QSEE Wifi Pro (docs/04 section G).
+#
+# Archivé pour traçabilité et complétude bibliographique (docs/04 section H). Les faits ci-dessous
+# ne sont repris dans AUCUN doc technique du projet — ils sont conservés ici au cas où le périmètre
+# évoluerait, et parce que la section « leçons méthodologiques » a une valeur transversale.
+
+## Cible et mécanisme de secure boot
+
+[00:06], [03:37] ECU "Simos18" (nom déformé par l'ASR, cohérent avec le titre de la vidéo).
+[05:09–06:15] MCU Infineon TriCore TC1791/TC1798 (famille AURIX) — transcription ASR dégradée
+  ("trior"/"tri cor"), non recoupé indépendamment.
+[04:14–04:40] Plateformes VW/Audi PQ et MQB, variante Porsche "SID". Véhicule de test : Golf 7R 2016.
+[06:53–07:02] Flash et EEPROM émulée internes au package MCU — pas de flash externe dumpable.
+[07:28–07:46] JTAG présent mais désactivé, boot passwords activés → le bootstrap loader ne peut pas
+  accéder au flash (bus fault).
+[17:58–18:19] 5 blocs de données flashés (1 customer bootloader, 3 app software, 1 calibration) ;
+  chaque bloc porte un header à l'offset 0x300 = CRC32 + plages d'adresses.
+[21:54–22:03] 256 octets de signature en fin de bloc.
+[37:25–37:41] Authentification RSA-2048, PKCS#1 v1.5, SHA-256, adresse mixée dans le hash
+  (anti-rejeu de bloc) — décrit par l'orateur comme correctement conçu.
+[25:56–26:06] Mode "series vs sample" : si le MCU est identifié comme échantillon de développement
+  (vérification OTP/flash-protect), AUCUNE vérification de signature n'est faite.
+[32:24–34:23] Le bootloader fournisseur cache une interface de reprogrammation nommée "TSW"
+  (signification non connue de l'orateur lui-même), déclenchée par un motif PWM sur 2 broches via le
+  bloc GPT du MCU.
+
+## Méthode réellement employée (logicielle, pas FI)
+
+[07:44–07:48] Bascule explicite de l'orateur vers l'attaque logicielle après constat que JTAG et
+  bootstrap sont verrouillés.
+[23:31–24:14] ★ Faille n°1 — bug de state machine : un bloc effacé mais non réécrit voit son flag de
+  validité jamais revérifié ("erase A / write B").
+[38:35–39:12] ★ Faille n°2 — course de timing (~1 ms) sur reset, pour lire la RAM avant qu'une tâche
+  CRC planifiée n'ait avancé. Exploitation d'un ordonnancement logiciel, PAS un glitch physique.
+[39:39–40:02] Aboutissement : récupération des mots de passe de déverrouillage flash (read/write) via
+  l'oracle CRC → accès libre au flash.
+[40:06–40:11] Bilan de l'orateur : les deux faiblesses principales sont le bug de state machine et
+  un PRNG initialisé avec une valeur de timer (seed 31 bits).
+[40:11–40:18] Faille sœur signalée sans détail : exploit similaire présent dans des ECU Bosch
+  jusqu'en 2021 — non recoupé.
+
+## Accès physique employé (jamais électrique)
+
+[29:26–29:35] Bodge filaire sur le transceiver CAN (TDA 13xx) : broches EN/STB tirées au niveau haut
+  pour activer le bus CAN sans exécuter le code de boot early.
+[30:11–30:22] Masse forcée sur le bus I²C entre le MCU et le chip d'alimentation Freescale SC900,
+  pour désactiver le watchdog matériel et empêcher le reboot forcé.
+[27:44–28:01] Upload d'un bootstrap loader légitime documenté (mode de boot alternatif TriCore, sans
+  NDA) via CAN — pas un glitch.
+
+## Objectif et contexte
+
+[00:51–01:07] Objectifs annoncés : comprendre l'ECU, modifier la calibration (chip tuning), obtenir
+  l'exécution de code.
+[01:42–01:56] Mention de sociétés de tuning aftermarket ayant indépendamment découvert la 2ᵉ faille.
+[04:01–04:04] Le tuning est fortement restreint sur cet ECU — motivation du travail.
+
+## Leçons méthodologiques transversales (valeur au-delà du périmètre FI)
+
+[07:28–07:48] ★ Triage du vecteur AVANT de choisir la méthode : constater que JTAG est off, les boot
+  passwords on et le flash verrouillé, puis basculer explicitement vers le logiciel. Le
+  docs/03_METHODOLOGIE_CAMPAGNE.md du projet suppose d'emblée le FI ; cette étape de triage
+  ("le FI est-il seulement la bonne option ici ?") manque comme garde-fou en amont.
+[30:30–30:58] Primitive "reset + dump RAM" pour récupérer clés/mots de passe en clair en mémoire
+  volatile — directement analogue au cas STM32F373 du projet (docs/03 §3.2 : après downgrade RDP
+  L2→L1, on lit RAM et registres, pas le flash).
+[38:53–39:12] ★ Une fenêtre de timing exploitable peut exister côté LOGICIEL pur, sans glitch — à
+  garder à l'esprit pour ne pas sur-attribuer au FI un comportement qui serait un bug d'ordonnancement.
+[23:31–24:14] Les protocoles de reflash UDS et leurs state machines sont eux-mêmes une surface
+  d'attaque logicielle, indépendamment du FI.

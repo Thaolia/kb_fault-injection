@@ -1,0 +1,116 @@
+# Index de citations & faits — Hackfest 2026, John LeClair,
+# "Electromagnetic Fault Injection: Low Cost, Touchless Method of manipulating hardware"
+# (publié 2026-02-19, 19 min 44 s)
+# Source : https://www.youtube.com/watch?v=zmzEtI_wt_Y (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2026-08-22, créé pour
+# ce projet via Save Page Now (aucun snapshot ne préexistait) :
+#   https://web.archive.org/web/20260822214709/https://www.youtube.com/watch?v=zmzEtI_wt_Y
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits techniques en paraphrase courte, avec
+# l'horodatage permettant de retrouver le passage exact dans les .json3/.vtt complets conservés
+# dans ce dossier (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+# Aucune citation verbatim de l'ASR.
+#
+# NOTE DE RÉVISION : ce fichier contenait initialement des blocs verbatim continus (03:01→13:30),
+# soit une reconstruction partielle du talk. Converti en index paraphrasé pour s'aligner sur la
+# politique appliquée aux 5 autres transcriptions du dossier et sur ce qu'annonce docs/06 §9
+# ("paraphrase + horodatage plutôt que blocs verbatim"). Aucun fait cité dans les docs n'a été perdu.
+#
+# ⚠ TRANSCRIPTION AUTOMATIQUE fortement dégradée sur ce talk — voir la liste des déformations
+# identifiées en fin de fichier. Ne jamais porter un chiffre d'ici dans une BOM ou un schéma sans
+# vérification indépendante.
+#
+# Exploité dans docs/06_EMI_INJECTOR_EMFI.md §1, §5, §6, §8.
+
+## Banc ultra-bas-coût (cité dans docs/06 §1, blockquote "Plancher de coût observé")
+
+[03:01–03:30] Argument d'accessibilité du talk : pas besoin d'être ingénieur électronicien ; un banc
+  de test minimal se monte pour ~30 $ avec une carte Arduino ATmega2560 et un allumeur piézo de
+  barbecue. (Chiffres oraux, non recoupés.)
+[07:00–07:15] Le cœur du banc : allumeur piézo de barbecue (~3 $) + inductance à noyau ferrite
+  (~3 $) → dispositif annoncé "de l'ordre du kilovolt", présenté comme capable de perturber
+  registres CPU et RAM. ⚠ Chiffre de tension NON recoupé — traité dans docs/06 comme démonstration
+  qualitative, jamais comme donnée de BOM. Ce banc n'offre ni position répétable ni forme
+  d'impulsion contrôlée : seuil de faisabilité, pas point de départ d'ingénierie.
+[03:30–04:04] L'orateur annonce publier du code source pour la localisation programmatique de
+  registres CPU et la détection de faute réussie. ⚠ Dépôt jamais localisé de façon fiable lors de la
+  vérification → non cité dans les docs.
+
+## Avantages du touchless (cité dans docs/06 §1)
+
+[04:04–04:30] Description générale du mécanisme : manipulation de bits en registres CPU et RAM pour
+  modifier l'exécution ; possibilité de sauter des instructions, de débloquer JTAG ou des zones
+  protégées, ou de fausser une branche conditionnelle.
+[04:30–05:01] ★ Le voltage glitching impose typiquement de retirer les condensateurs de découplage
+  de la carte, et sur du matériel durci de retirer un potting de protection. L'EMFI n'a pas cette
+  contrainte.
+[05:01–05:31] ★ L'EMFI a une résolution spatiale fine (faisceau étroit) et n'affecte en principe pas
+  le reste de la carte, contrairement au voltage glitch qui perturbe le rail global. L'impulsion peut
+  être appliquée par le dessous du PCB et traverse les revêtements conformes / le potting — donc
+  efficace contre des cartes anti-tamper encapsulées.
+[05:31–06:00] Exemples de travaux antérieurs cités : le hack du portefeuille matériel Trezor One par
+  Joe Grand (★ VÉRIFIÉ sur sources tierces — c'est un VOLTAGE glitch, pas de l'EMFI ; cité dans
+  docs/06 uniquement pour le contraste pédagogique) ; contournement de secure boot ARM TrustZone
+  y compris sur tablettes ; déverrouillage de fonctions de sécurité STM32 ; altération de calculs AES
+  sur petits microcontrôleurs et FPGA. (Ces trois derniers non recoupés.)
+
+## Sécurité haute tension (cité dans docs/06 §8, point 7)
+
+[06:00–06:12] ⚠ Affirmation que certains bancs EMFI génèrent des pointes de plus de 100 000 V —
+  chiffre de l'orateur NON recoupé, traité dans docs/06 comme ordre de grandeur, jamais comme spec.
+  La haute tension circule en permanence dans la sonde ; c'est sa libération brusque qui produit
+  l'impulsion EM.
+[06:12–06:43] ★ RÈGLE DE SÉCURITÉ retenue dans docs/06 §8 : la charge résiduelle persiste des
+  minutes après coupure → toujours couper, débrancher et attendre ~5 minutes avant de changer une
+  pointe ; toujours isoler la pointe et ses connexions sous plusieurs couches de gaine
+  thermorétractable ou de ruban isolant. L'orateur rapporte s'être électrocuté lui-même en saisissant
+  une pointe sans cette précaution (perte de sensation pendant environ une heure) — retenu comme
+  retour d'expérience de première main, pas comme donnée chiffrée.
+
+## Pointes d'injection (cité dans docs/06 §6)
+
+[09:17–09:32] Pointes EMFI fabriquées soi-même, ~3 à 5 $ pièce, aucun fournisseur dédié identifié par
+  l'orateur. ★ Elles sont POLARISÉES selon leur câblage — recoupe directement le modèle de faute
+  polarité-dépendant d'Ordas 2015 `[corpus]`.
+[09:32–10:01] ★ Heuristique de taille retenue dans docs/06 : petite pointe = résolution spatiale
+  très fine ; grande pointe = "Hail Mary", utilisée d'abord pour vérifier qu'un banc fonctionne du
+  tout avant d'affiner. La pointe intermédiaire est celle que la plupart des fabricants livrent.
+[09:50–10:01] Imprimantes 3D ou CNC de récupération comme platines XY — souvent trouvables
+  gratuitement, modifiables rapidement (repris dans le tableau BOM de docs/06 §4).
+[10:01–10:20] La platine permet une reconnaissance précise de toute la puce ou de la carte, et de
+  repositionner la sonde sur une position active connue ; possibilité de fuzzer la position jusqu'à
+  trouver l'emplacement exact où la faute se produit.
+
+## Méthodologie de reconnaissance XY (cité dans docs/06 §5)
+
+[12:30–13:00] ★ PROCÉDURE retenue dans docs/06 §5 : balayer chaque position de la puce par pas de
+  ~0,5 à 1 mm (pas non recoupé indépendamment) ; à chaque position — geler le processeur, écrire des
+  valeurs connues en RAM et dans les registres, injecter l'impulsion, relire, comparer, et marquer la
+  position "sans effet" / "RAM modifiée" / "registre modifié". Produit une carte des zones actives
+  AVANT toute tentative d'exploitation.
+[13:00–13:30] ★ Carte de calibration NewAE ChipSHOUTER Ballistic Gel recommandée par l'orateur comme
+  son dispositif de confiance pour tester une nouvelle sonde ou une nouvelle fonction : elle visualise
+  l'étalement du faisceau. Scan XY complet démontré sur cette carte à 375 volts avec une pointe de
+  polarité positive. (★ L'existence et l'usage de la carte sont VÉRIFIÉS via le dépôt GitHub
+  newaetech/ChipSHOUTER-ballisticgel ; les 375 V restent un chiffre oral non recoupé.)
+
+## ⚠ Déformations ASR identifiées sur ce talk (à connaître avant de relire les .vtt/.json3)
+
+L'ASR de ce talk est particulièrement dégradé sur les noms propres. Corrections établies :
+  "treasure 1"        → Trezor One (portefeuille matériel)
+  "Joe Grant"         → Joe Grand (chercheur)
+  "new AA" / "new AE" → NewAE Technology (fabricant du ChipSHOUTER)
+  "AT mega 256 2560"  → ATmega2560 (microcontrôleur Arduino)
+  "1 jew"             → 1 joule (unité d'énergie)
+  "FPJs"              → FPGA
+  "stem32"            → STM32
+  "ampia"             → probablement "EMP"/"EM" (pointe intermédiaire)
+Cette liste illustre le niveau de bruit à attendre sur ce type de talk matériel — raison pour
+laquelle aucun chiffre ni nom propre d'origine ASR n'entre dans docs/02_BOM_MATERIEL.md.
+
+## Angles non exploitables faute de source vérifiable
+
+Les diapositives annoncées par l'orateur (lien GitHub personnel donné à l'oral) n'ont pas été
+localisées de façon fiable. En conséquence, deux angles évoqués restent THÉMATIQUES seulement dans
+docs/06, non détaillés en méthode : le code de localisation automatique de registres CPU, et le
+contournement de TrustZone sur tablette.

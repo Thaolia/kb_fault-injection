@@ -1,0 +1,94 @@
+# Index de citations & faits — hardwear.io 2018, Santiago Cordoba,
+# "Fault Injection On Automotive Diagnosis Protocols" (2018-10-29, 41 min)
+# Source : https://www.youtube.com/watch?v=10Dag6ee2d8 (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2025-11-18 :
+#   https://web.archive.org/web/20251118080914/https://www.youtube.com/watch?v=10Dag6ee2d8
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits techniques en paraphrase courte, avec
+# l'horodatage permettant de retrouver le passage exact dans les .json3/.vtt complets conservés
+# dans ce dossier (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+#
+# ★ RECOUPEMENT MAJEUR : Cordoba est co-auteur du whitepaper `[corpus]`
+# docs_pdf/2018_escareu_There-Will-Be-Glitches-Whitepaper.pdf (Milburn, Timmers, Wiersma, Pareja,
+# Cordoba). Ce talk en est très largement la version orale. CONSÉQUENCE DE PROVENANCE : tout ce qui
+# recoupe le papier se cite `[corpus]` AVEC PAGE (provenance plus forte) — voir section A ci-dessous.
+# Seul le contenu de la section B, absent du papier, se cite `[ref, mm:ss]`.
+#
+# Exploité dans docs/03_METHODOLOGIE_CAMPAGNE.md §9.2.
+
+## A. Contenu RECOUPÉ avec le whitepaper — citer la PAGE, pas l'horodatage
+
+Ces points sont dans le talk MAIS aussi dans le papier `[corpus]` : préférer la page du PDF.
+
+[00:04:15–00:04:33] Cible = instrument cluster (tableau de bord) → whitepaper p. 1-2, §2 "The Target"
+[00:04:50–00:05:07] Méthodologie en 3 phases (comprendre / identifier / exploiter) → p. 1, intro
+[00:06:28–00:07:58] UDS = protocole de diagnostic ISO 14229, services d'accès mémoire + niveaux de
+  privilège → p. 3
+[00:08:41–00:09:22] Schéma seed-key challenge/response de SecurityAccess → p. 3, Fig. 3
+[00:09:27–00:09:57] UDS ne donne aucune recommandation d'implémentation → p. 3
+[00:20:51–00:21:11] Timeout de 10 min après 3 mauvaises clés, obstacle à l'attaque directe → p. 3, §3.2.1
+[00:21:26–00:22:35] ReadMemoryByAddress : pas de limite de tentatives, vérifie un flag
+  "authenticated" → cible du glitch → p. 3, §3.2.2
+[00:27:31–00:28:42] Paramètres de glitch : Delay / Duration / Voltage → p. 2, Fig. 2
+[00:28:51–00:31:08] Recherche par diviser-pour-régner + indicateurs comportementaux → p. 2
+[00:17:57–00:18:12] Outillage : ChipWhisperer (open source) et Riscure Inspector FI → p. 2, p. 7 [8][12]
+[00:35:26–00:35:38] WriteMemoryByAddress permet l'écriture mémoire arbitraire → p. 3
+[00:33:57–00:36:45] Un seul FI réussi ne scale pas, mais ses RÉSULTATS scalent → p. 6, §6 + Fig. 7
+[00:36:49–00:38:20] Conclusion : ce sont les implémentations UDS qui sont faibles, pas UDS ;
+  le FI défait la sécurité logicielle sans faille logicielle → p. 2, p. 6-7
+
+## B. Contenu NOUVEAU, vidéo seule — citer [ref, mm:ss], tout non recoupé sauf mention
+
+[00:33:14–00:33:31] ★ L'EMFI aurait aussi été utilisée sur ces campagnes, avec un taux de succès
+  "à peu près identique" au voltage glitch. Limites : pas d'attribution à une cible précise, pas de
+  taux absolu, aucun paramètre de sonde/énergie/position. Le whitepaper dit seulement se concentrer
+  "principalement" sur le voltage FI (p. 2) — donc extension, pas contradiction. À traiter comme
+  piste, PAS comme donnée EMFI chiffrée.
+[00:32:54–00:33:10] L'attaque aurait fonctionné sur différents ECU bâtis sur des MCU différents.
+  Le whitepaper n'en documente qu'un seul. Ambigu à l'ASR : "différents modèles" peut désigner des
+  modèles de véhicule ou des modèles de puce — non tranché.
+[00:26:41–00:26:52] ⚠ DIVERGENCE NON RÉSOLUE : affirmation orale qu'aucune autre modification n'a
+  été faite sur l'ECU de démo ("réinstallable dans la voiture tel quel") — alors que le whitepaper
+  (p. 2) documente le retrait des condensateurs de découplage ET de plusieurs composants. Mêmes
+  auteurs, ~1 an d'écart, potentiellement le même banc. Signalé dans docs/03 §9.2 SANS être tranché.
+[00:23:02–00:23:44] Outils physiques nommés : "Spider" = glitcher FPGA contrôlant la ligne VCC et le
+  reset de la cible — ★ RECOUPÉ (fiche produit Riscure existante). "Uragan"/Huracan = adaptateur CAN
+  avec trigger, fuzzing et man-in-the-middle — nom probable "Huracan" (produit Riscure existant, décrit
+  comme outil de fuzzing/scanning/mocking d'ECU) mais les fonctions trigger et MITM décrites à l'oral
+  ne sont PAS confirmées par la fiche → correspondance partielle.
+[00:29:22–00:30:14] ★ Visualisation par nuage de points colorés (1 point = 1 tentative), scoring en
+  3 catégories : comportement attendu / "mute" ou reboot sans réponse / succès. Les CATÉGORIES sont
+  fiables — elles corroborent le scoring Expected/Mute-Reset/Success du papier `[corpus]` FDTC'17
+  déjà cité dans docs/03 §9.2. Le mapping couleur↔catégorie de l'ASR n'est PAS fiable (rouge apparaît
+  deux fois).
+[00:31:12–00:32:28] ★ Explication du jitter de réponse : la cible tourne sur un RTOS avec
+  ordonnanceur, le délai commande→réponse n'est donc pas fixe → impossible d'atteindre 100 % de
+  succès avec des paramètres figés → nécessité de randomiser en continu. Absent du texte du papier.
+[00:13:57–00:15:09] Mitigations énoncées à l'oral au-delà du papier : limite de tentatives, grand
+  espace de clés, RNG fort et éprouvé, et ★ calcul du seed-response déporté côté serveur en ligne
+  (le secret ne transite jamais dans le véhicule). Seul "clés uniques par ECU" recoupe le papier (p. 6).
+[00:18:41–00:19:41] Pédagogie des modèles de faute en début de talk : bit-flip 0→1 et 1→0, blocage
+  de lecture/écriture registre, skip d'instruction, désactivation de module via bit de config,
+  destruction de puce. Absent du corps du whitepaper.
+[00:24:49–00:26:41] Détails du banc de démo : connexions cible limitées à CAN hi/lo, alimentation et
+  masse ; tension du cœur MCU réacheminée via l'amplificateur de glitch ; scope + ampli visibles.
+[00:10:00–00:12:14] Jeu interactif avec le public : 3 cartes développées par Riscure pour un
+  "hardware CTF", les spectateurs devant identifier les failles (replay, algo de clé faible,
+  vérification de clé glitchable, espace de clés trop petit). Noms des cartes non identifiables (ASR
+  fortement dégradé).
+[00:39:26–00:41:01] Q&A : contre-mesures logicielles (double vérifications, contrôle des variables de
+  boucle, détection + reset) et constat que le code résistant aux fautes devient difficile à lire.
+  Le papier ne traite le durcissement que côté HSM/asymétrique (p. 6).
+
+## C. Chiffres INUTILISABLES (à ne jamais reporter)
+
+[00:30:38–00:31:00] "de zéro à deux volts", narrowing "plus haut que 150" / "plus bas que 50" —
+  AUCUNE unité identifiable dans l'ASR (V ? ns ? %). Inutilisables comme paramètres, pas seulement
+  non recoupés.
+[00:21:46] vs [00:33:46–00:33:53] Taille de bloc max : "cent octets" (explication générale
+  hypothétique) vs "40 octets ou quelque chose comme ça" (autre cible). L'orateur hésite lui-même.
+  Le "40" pourrait être une restitution dégradée du 0x40 du whitepaper (p. 3, radix perdu à l'oral)
+  plutôt qu'une seconde cible → NE PAS conclure à deux cibles distinctes sur cette base.
+[00:02:05–00:02:12] Schéma de câblage complet d'une voiture ≈ 2000 pages — non recoupé, anecdotique.
+[00:00:30–00:00:54] Contexte cité en intro : hack Jeep (Charlie Miller, 2014), hacks Tesla, hack
+  d'application pour un véhicule Mitsubishi (probablement Outlander PHEV 2016, non recoupé).

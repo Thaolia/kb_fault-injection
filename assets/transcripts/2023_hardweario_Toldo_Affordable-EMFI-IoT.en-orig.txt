@@ -1,0 +1,107 @@
+# Index de citations & faits — hardwear.io USA 2023, Davide Toldo,
+# "Affordable EMFI Attacks Against Modern IoT Chips" (2023-07-28, 30 min)
+# Source : https://www.youtube.com/watch?v=_Uz4tN-I2D4 (sous-titres auto en-orig, ASR YouTube)
+# Archive Wayback (métadonnées seules, ni vidéo ni sous-titres) — snapshot 2025-09-18 :
+#   https://web.archive.org/web/20250918205323/https://www.youtube.com/watch?v=_Uz4tN-I2D4
+#
+# CECI N'EST PAS UNE TRANSCRIPTION : index de faits techniques en paraphrase courte, avec
+# l'horodatage permettant de retrouver le passage exact dans les .json3/.vtt complets conservés
+# dans ce dossier (sous-titres auto publics YouTube, téléchargés via yt-dlp, non modifiés).
+#
+# ★ PARTICULARITÉ : les SLIDES OFFICIELLES de la conférence (PDF public hardwear.io, 23 pages) ont
+# été consultées pour recouper l'ASR. La majorité des chiffres cités dans docs/06 §1.3 viennent des
+# slides (source primaire), pas de l'audio — ce qui corrige plusieurs déformations ASR notables
+# (ex. la résolution du générateur de délai : 2,5 ns sur les slides, transcrite "200,5 ns" par l'ASR).
+# Origine notée ci-dessous : [mm:ss] = audio seul ; [slide N] = confirmé source primaire.
+#
+# Exploité dans docs/06_EMI_INJECTOR_EMFI.md §1.3.
+
+## Cible
+
+[slide 7, 15], [18:21–18:36] Espressif ESP32-C3 (SoC IoT, cœur unique RISC-V, WiFi/BLE), sur une
+  carte tierce "C3 Mini", marquage puce visible sur le PCB.
+[slide 6, 19] Aucun die-shot disponible pour cette puce : les images de floorplan montrées
+  (STM32/GD32F103) sont purement illustratives, PAS la cible réelle.
+[slide 20], [23:01–23:16] Génération antérieure déjà glitchée par un tiers ("Limited Results",
+  2020) — puce exacte non nommée dans le talk, non recoupé.
+
+## Banc et budget
+
+[slide 10], [08:50–13:30] Générateur de délai, 3 options : FPGA Digilent Cmod A7 (Artix-7) avec le
+  bitstream open-source chip.fail de @stacksmashing + carte add-on "EMFI Companion v0.2" (~100 $) ;
+  Raspberry Pi Pico, firmware custom en cours (~5 $, résolution plus grossière) ; ChipWhisperer
+  Husky (~500 $).
+[slide 6] Résolution du générateur FPGA : 400 MHz → pas de 2,5 ns.
+[slide 11], [13:45–14:46] Pulseur EMFI, 3 options nommées : ChipSHOUTER CW520, PicoEMP,
+  SiliconToaster (Ledger) — les trois déjà cités dans docs/06.
+[slide 9], [08:50–11:56] Platine XY : CNC ou imprimante 3D bas coût, interchangeables via G-code
+  (~200 $). Note technique : les entraînements vis-écrou ont ~10× plus de backlash que les courroies.
+[slide 12], [14:46–16:34] Matériel custom open-source additionnel : carte "Hardware Reset" (alim
+  propre + coupure GPIO du DUT) et carte FPGA Breakout / EMFI Companion.
+[slide 13], [16:34–17:19] Logiciel custom "EMFIControl" : CLI Python (position, injection, scan),
+  export CSV, script de visualisation matplotlib.
+[slide 21], [24:18–24:49] Budget récapitulatif : platine XY ~200 $, pulseur EMFI ~2000 $ (chiffre
+  générique de la slide de conclusion, non rattaché explicitement à l'un des 3 pulseurs listés),
+  générateur de délai ~100 $.
+[slide 23] Dépôt de ressources : github.com/unixb0y/EMFI-Resources
+[slide 14], [11:41–11:56] Deux tailles de banc montrées : petit (Cmod A7 + EMFI Companion,
+  portable) et gros (Nexys4 DDR + carte custom) — le petit suffit pour ces cibles IoT.
+
+## Paramètres et résultat
+
+[slide 18] Table CSV du glitch réussi : voltage=480, delay=100, width=20 → fault=TRUE. Un essai
+  voisin à voltage=470 (mêmes delay/width) donne "normal" ou "brownout" → seuil de bascule très
+  étroit, 10 unités d'écart. ⚠ Unités non indiquées sur la table elle-même.
+[25:19–25:34] Recoupement audio : l'orateur mentionne avoir eu besoin de "presque 500 volts" du
+  ChipShouter sur cette cible — suggère que l'unité de la colonne voltage est bien le volt et que le
+  pulseur employé était le ChipSHOUTER.
+[slide 18-19] Grille de balayage spatial : X, Y ∈ [−2,0 ; 2,0] mm (empan ~4×4 mm) ; pas de grille
+  non chiffré explicitement.
+[slide 6], [07:33–07:48] Exemple pédagogique d'oscillogramme (section introductive, PAS les
+  paramètres finaux) : délai 1200 ns entre front de reset et trigger, largeur de pulse 200 ns.
+[slide 18], [17:19–17:35] "Successful Instruction Skip" revendiqué comme premier résultat sur cette
+  révision de puce ; sensibilité corrélée spatialement aux zones de crash/brownout.
+⚠ AUCUN taux de succès agrégé en % n'est donné dans tout le talk — seulement une cartographie XY
+  qualitative par catégorie. Absence à noter (contraste avec Bozzato ou O'Flynn du corpus).
+[28:25–29:28] ★ Q&A : le succès porte sur une BOUCLE DE TEST SYNTHÉTIQUE (compteur en assembleur
+  inline), pas sur le secure boot réel. Le timing n'était pas critique pour cet exemple construit ;
+  l'orateur suppose que la zone spatiale resterait similaire pour une application réelle.
+
+## Cartographie et contre-mesures
+
+[slide 18], [21:26–21:57] Coin supérieur-gauche de la grille : quasi tous les "fault" regroupés,
+  plus quelques "brownout" — hypothèse de l'orateur : zone CPU.
+[slide 19], [22:30–22:56] Zone centre-droite : crashes liés à l'horloge — hypothèse : proximité
+  d'un oscillateur.
+[slide 16, 18], [19:37–20:07] Détection de brown-out (toolchain FreeRTOS par défaut), NON conçue
+  pour l'EMFI, bloque/reset le device dans une zone du die — effet de bord protecteur, pas une
+  contre-mesure EMFI dédiée.
+[slide 20], [23:16–23:46] Diapo "IMPACT" : attaque jugée avancée, pas encore assez fiable pour être
+  menée "sur le terrain".
+[slide 21], [25:34–25:50] Conclusion : la puce est sécurisée contre le voltage FI et les canaux
+  auxiliaires, mais pas contre un attaquant sérieux en EMFI — écho direct au principe DATE 2014
+  `[corpus]` (l'EMFI locale échappe aux détecteurs globaux).
+
+## Méthodologie transférable au projet
+
+[slide 13, 18] ★ Scoring en 5 catégories PAR POSITION : normal / crash / brownout / timeout / fault
+  — logique quasi identique au scoring 5 catégories de docs/03, labels différents.
+[slide 6], [09:53–10:23] ★ Cartographier d'abord (grille XY grossière, scoring par catégorie) pour
+  repérer une ZONE GROUPÉE, avant d'affiner — plutôt que chercher un point précis d'emblée.
+[26:25–27:27] ★ Recherche du délai (Q&A) : trois approches — utiliser le code source/binaire pour
+  situer l'instruction cible ; ajouter des GPIO de debug juste avant l'instruction visée et
+  chronométrer au scope ; ou, en boîte noire, analyser la signature de courant (canal auxiliaire)
+  pour repérer un point de référence temporel avant de balayer autour.
+[slide 16], [19:52–20:55] Deux obstacles pratiques rencontrés : la boucle de test était éliminée par
+  l'optimisation du compilateur (contourné en assembleur inline) ; les transferts UART étaient
+  corrompus par l'EMFI elle-même (contourné en passant de l'UART-USB intégré à un UART sur GPIO).
+[slide 19] Die-shots suggérés pour cartographier plus finement (nécessite décapsulation) — non fait
+  ici faute de photo disponible.
+
+## Divergence signalée
+
+[14:31–14:46] ⚠ SiliconToaster annoncé oralement à "750 volts" — en désaccord avec le 1,2 kV sourcé
+  du papier Ledger `[corpus]` (docs/06 §3.1). Chiffre ASR non recoupé, NON retenu : le 1,2 kV du
+  papier reste la référence du projet.
+[27:52–28:07] Nom de fabricant inaudible/mal transcrit ("Emily") à propos de puces antérieures
+  glitchées — probablement "Espressif", non recoupé.

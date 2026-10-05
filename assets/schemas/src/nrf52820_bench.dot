@@ -1,0 +1,42 @@
+digraph nrf52820_bench {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Banc nRF52820 — voltage glitching sur DEC1 (rail cœur) au FaultyCat",
+         nodesep=0.45, ranksep=1.6];
+  node  [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=11, margin="0.16,0.11"];
+  edge  [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  BP [label="Bus Pirate 5\nALIMENTATION + POWER-CYCLE\nPSU 1–5 V / 300 mA  (W / w)\n★ le POR EST l'événement de reset\n⚠ jamais dans le chemin de trigger",
+      fillcolor="#e8f5e9"];
+  FC [label="FaultyCat v3  (RP2040)\nLE GLITCHER — et rien d'autre\ncrowbar GP16 (IRLML0060)\nwidth_ns 8…50 000 · delay_us pas de 1 µs\n⚠ son SWD est WIP : pas d'oracle",
+      fillcolor="#fff4e5"];
+  SL [label="ST-Link / CMSIS-DAP\nORACLE + DUMP  (OpenOCD, nrf52.cfg natif)\ndap info · mdw 0x0 · dump_image",
+      fillcolor="#dbe9ff"];
+
+  DUT [shape=plaintext, fillcolor="none", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#eaf3ff">
+      <TR><TD COLSPAN="3" BGCOLOR="#c9dcf5"><B>nRF52820 (cible)</B><BR/><FONT POINT-SIZE="9">Cortex-M4 · 256 kB flash @ 0x0000_0000 · 32 kB RAM @ 0x2000_0000</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>broche</B></TD><TD ALIGN="LEFT"><B>signal</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">QFN40 · WLCSP</FONT></TD></TR>
+      <TR><TD PORT="dec1" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>DEC1</B></TD><TD ALIGN="LEFT"><B>★ POINT D'INJECTION</B> — rail cœur 1,1 V</TD><TD ALIGN="LEFT">1 · A7</TD></TR>
+      <TR><TD PORT="vdd" ALIGN="LEFT" BGCOLOR="#e8f5e9"><B>VDD</B></TD><TD ALIGN="LEFT">alim 1,7–3,6 V — relier VDDH (br. 9) à VDD</TD><TD ALIGN="LEFT">8 · 18 · 30 · 40</TD></TR>
+      <TR><TD PORT="vss" ALIGN="LEFT">VSS</TD><TD ALIGN="LEFT">masse commune (+ pad arrière)</TD><TD ALIGN="LEFT">37 · A4</TD></TR>
+      <TR><TD PORT="swdio" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>SWDIO</B></TD><TD ALIGN="LEFT">données SWD (broche dédiée, pull-up 13 kΩ)</TD><TD ALIGN="LEFT">19 · G1</TD></TR>
+      <TR><TD PORT="swclk" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>SWDCLK</B></TD><TD ALIGN="LEFT">horloge SWD — obligatoire (0,125–8 MHz)</TD><TD ALIGN="LEFT">20 · G2</TD></TR>
+      <TR><TD PORT="dec4" ALIGN="LEFT" BGCOLOR="#fff4e5"><B>DEC4</B></TD><TD ALIGN="LEFT">1,3 V — trigger ; ⚠ à relier à DEC6 (br. 26)</TD><TD ALIGN="LEFT">38 · A5</TD></TR>
+      <TR><TD PORT="rst" ALIGN="LEFT">P0.18 / nRESET</TD><TD ALIGN="LEFT">⚠ n'existe PAS par défaut (PSELRESET) — et ne réinitialise pas le SWJ-DP</TD><TD ALIGN="LEFT">16 · —</TD></TR>
+      <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>★ découplage DEC1 RETIRÉ</B> — puis 100 nF à réessayer (stabilité de boot, LimitedResults)</TD></TR>
+      <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#f3e5f5"><B>★ DEC5 (br. 21)</B> non connecté sur les <I>build codes</I> Dxx+ — indice du régime de protection</TD></TR>
+    </TABLE>>];
+
+  BP -> DUT:vdd   [label="VOUT — POR par coupure (w / W)\n★ seul POR/brownout réinitialise le SWJ-DP", color="#2e7d32", penwidth=2.0];
+  BP -> DUT:vss   [label="GND", color="#2e7d32"];
+  FC -> DUT:dec1  [label="GP16 — crowbar sur le RAIL CŒUR\n(le brownout ne surveille que VDD)", color="#c0392b", penwidth=2.6];
+  DUT:dec4 -> FC  [label="GP8 TRIGGER_IN + GP29 ADC\n(pont diviseur)", style=dashed, color="#e07b00", constraint=false];
+  SL -> DUT:swclk [label="SWDCLK", color="#1a5fb4", penwidth=1.8];
+  SL -> DUT:swdio [label="SWDIO  (R série ~100 Ω)", dir=both, color="#1a5fb4", penwidth=1.8];
+
+  NOTE [shape=note, fillcolor="#fffde7", fontsize=10, label=
+    "★ ÉTAPE 0 : lire la lettre <H> du marquage boîtier\l   C ou avant  ⇒ régime A — une seule faute\l   D ou après  ⇒ régime B — verrou HW + SW, deux fautes\l\l⚠ une seule masse commune à tous les outils\l⚠ le FaultyCat ne sait pas lire le SWD (WIP)\l"];
+  { rank=sink; NOTE; }
+}

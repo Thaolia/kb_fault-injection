@@ -1,0 +1,41 @@
+digraph bat32_bench {
+  rankdir=LR;
+  bgcolor="white";
+  graph [fontname="DejaVu Sans", fontsize=15, labelloc=t,
+         label="Banc BAT32G135 — voltage glitching au FaultyCat (topologie à 3 outils)",
+         nodesep=0.45, ranksep=1.5];
+  node  [fontname="DejaVu Sans", shape=box, style="rounded,filled", fontsize=11, margin="0.16,0.11"];
+  edge  [fontname="DejaVu Sans", fontsize=10, color="#333333"];
+
+  BP [label="Bus Pirate 5\nALIMENTATION + POR\nPSU 1–5 V / 300 mA  (W / w)\n⚠ jamais dans le chemin de trigger",
+      fillcolor="#e8f5e9"];
+  FC [label="FaultyCat v3  (RP2040)\nLE GLITCHER — et rien d'autre\ncrowbar GP16 (IRLML0060)\nwidth_ns 8…50 000 · delay_us pas de 1 µs\n⚠ son SWD est WIP : pas d'oracle",
+      fillcolor="#fff4e5"];
+  SL [label="ST-Link / CMSIS-DAP\nORACLE + DUMP  (OpenOCD)\nlit 0x0 et dumpe la flash",
+      fillcolor="#dbe9ff"];
+
+  DUT [shape=plaintext, fillcolor="none", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#eaf3ff">
+      <TR><TD COLSPAN="3" BGCOLOR="#c9dcf5"><B>BAT32G135 (cible)</B><BR/><FONT POINT-SIZE="9">Cortex-M0+ · 64 KB flash @ 0x0000_0000</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>broche</B></TD><TD ALIGN="LEFT"><B>signal</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">LQFP32/QFN32 · QFN40 · LQFP48</FONT></TD></TR>
+      <TR><TD PORT="vdd" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>VDD</B></TD><TD ALIGN="LEFT">alim + <B>point d'injection</B></TD><TD ALIGN="LEFT">7 · 9 · 11</TD></TR>
+      <TR><TD PORT="vss" ALIGN="LEFT">VSS</TD><TD ALIGN="LEFT">masse commune</TD><TD ALIGN="LEFT">6 · 8 · 10</TD></TR>
+      <TR><TD PORT="swdio" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>P40</B></TD><TD ALIGN="LEFT"><B>SWDIO</B> (données)</TD><TD ALIGN="LEFT">1 · 1 · 3</TD></TR>
+      <TR><TD PORT="swclk" ALIGN="LEFT" BGCOLOR="#dbe9ff"><B>P137</B></TD><TD ALIGN="LEFT"><B>SWCLK</B> (horloge — obligatoire)</TD><TD ALIGN="LEFT">3 · 5 · 7</TD></TR>
+      <TR><TD PORT="rst" ALIGN="LEFT">RESETB</TD><TD ALIGN="LEFT">actif bas — vers VDD par R si non piloté</TD><TD ALIGN="LEFT">2 · 2 · 4</TD></TR>
+      <TR><TD COLSPAN="3" ALIGN="LEFT" BGCOLOR="#ffe0e0"><B>★ découplage VDD RETIRÉ</B> — sinon le crowbar n'atteint jamais le cœur (LDO interne, pas de VCAP)</TD></TR>
+    </TABLE>>];
+
+  BP -> DUT:vdd   [label="VOUT — POR par coupure (w / W)", color="#2e7d32", penwidth=2.0];
+  BP -> DUT:vss   [label="GND", color="#2e7d32"];
+  FC -> DUT:vdd   [label="GP16 — crowbar\n(court-circuit bref)", color="#c0392b", penwidth=2.6];
+  DUT:vdd -> FC   [label="GP8 TRIGGER_IN + GP29 ADC\n(pont diviseur)", style=dashed, color="#e07b00", constraint=false];
+  SL -> DUT:swclk [label="SWCLK ★", color="#1565c0", penwidth=2.0];
+  SL -> DUT:swdio [label="SWDIO ★", dir=both, color="#1565c0", penwidth=2.0];
+  SL -> DUT:vss   [label="GND", color="#1565c0", style=dashed];
+
+  { rank=same; BP; FC; SL; }
+  N [shape=note, fillcolor="#fffde7", style=filled, fontsize=10, label=
+     "⚠ R série ~100 Ω sur SWCLK/SWDIO :\npendant le glitch, le debugger tient les lignes\nà 3,3 V et peut réalimenter la cible par ses\ndiodes de protection, empêchant le rail de descendre.\nVérifier le creux à l'oscilloscope DEBUGGER BRANCHÉ."];
+  SL -> N [style=invis, constraint=false];
+}
