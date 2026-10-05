@@ -104,7 +104,7 @@ L'**ADP3623 reste attribuable à Bozzato seul**.
   la datasheet RP2350 elle-même**, déjà présente ici.
 - AO3400A — https://www.aosmd.com/pdfs/datasheet/AO3400A.pdf
 - IRLML2502 — https://www.infineon.com/dgdl/Infineon-IRLML2502-DataSheet-v01_01-EN.pdf
-- VN2222LL — https://ww1.microchip.com/downloads/en/DeviceDoc/VN2222LL-N-Channel-Enhancement-Mode-Vertical-DMOS-FET-Data-Sheet-20005987A.pdf
+- VN2222LL — https://ww1.microchip.com/downloads/en/DeviceDoc/VN2222LL-N-Channel-Enhancement-Mode-Vertical-DMOS-FET-Data-Sheet-20005987A.pdf · archive 2026-10-05 : https://web.archive.org/web/20261005002021/https://ww1.microchip.com/downloads/en/DeviceDoc/VN2222LL-N-Channel-Enhancement-Mode-Vertical-DMOS-FET-Data-Sheet-20005987A.pdf
 - IRLML6402 — https://www.infineon.com/dgdl/Infineon-IRLML6402-DataSheet-v01_01-EN.pdf
 - 2N7002 — https://assets.nexperia.com/documents/data-sheet/2N7002.pdf
 - ADP3623 — officiel https://www.analog.com/media/en/technical-documentation/data-sheets/adp3623_3624_3625_3633_3634_3635.pdf
